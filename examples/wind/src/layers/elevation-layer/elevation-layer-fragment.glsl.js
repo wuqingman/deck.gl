@@ -14,7 +14,7 @@ void main() {
 
   float opacity = smoothstep(elevationRange.x, elevationRange.y / 2.0, vAltitude) * 1.;
 
-  float lightWeight = getLightWeight(vPosition, normalize(vNormal));
+  float lightWeight = getLightWeight(vPosition.xyz, normalize(vNormal));
 
   gl_FragColor = vec4(vec3(15./70., 26./70., 36./70.) * lightWeight, opacity);
 }
