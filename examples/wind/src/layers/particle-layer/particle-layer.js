@@ -311,7 +311,7 @@ export default class ParticleLayer extends Layer {
       geometry: new Geometry({
         id: this.props.id,
         // FIXME - change to GL.POINTS when luma assert is fixed
-        drawMode: 'POINTS',
+        drawMode: GL.POINTS,
         isInstanced: false,
         attributes: {
           positions: {size: 3, type: gl.FLOAT, value: positions3}

@@ -24,32 +24,34 @@ const defaultProps = {
 };
 
 export default class ElevationLayer extends Layer {
-
   getShaders() {
     return {
       vs: vertex,
-      fs: fragment
+      fs: fragment,
+      modules: ['lighting'],
+      shaderCache: this.context.shaderCache
     };
   }
 
   initializeState() {
     const {gl} = this.context;
 
-    const data = {};
     loadTextures(gl, {
       urls: [ELEVATION_DATA_IMAGE],
+      // TODO open bug for this, refine the loadTextures interface
       parameters: {
-        magFilter: GL.LINEAR
+        parameters: {
+          [GL.TEXTURE_MAG_FILTER]: GL.LINEAR,
+          [GL.TEXTURE_MIN_FILTER]: GL.LINEAR,
+          [GL.TEXTURE_WRAP_S]: GL.CLAMP_TO_EDGE,
+          [GL.TEXTURE_WRAP_T]: GL.CLAMP_TO_EDGE
+        }
       }
-    })
-    .then(([texture]) => {
-      data.texture = texture;
+    }).then(textures => {
+      this.setState({data: textures[0]});
     });
 
-    this.setState({
-      model: this.getModel(gl),
-      data
-    });
+    this.setState({model: this.getModel(gl)});
 
     this.setUniforms({
       ...LIGHT_UNIFORMS,
@@ -85,12 +87,17 @@ export default class ElevationLayer extends Layer {
     gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
     gl.blendEquation(gl.FUNC_ADD);
 
+    const {zScale} = this.props;
     const {data, model} = this.state;
 
-    if (data.texture) {
-      model.render(Object.assign({}, uniforms, {
-        elevationTexture: data.texture,
-        zScale: this.props.zScale || 1
+    if (!data || !model) {
+      return;
+    }
+
+    model.render(
+      Object.assign({}, uniforms, {
+        elevationTexture: data,
+        zScale
       })
       /* FIXME - Use the coming settings feature in luma.gl
       settings: {
@@ -99,8 +106,7 @@ export default class ElevationLayer extends Layer {
         blendEquation: GL.FUNC_ADD
       }
       */
-      );
-    }
+    );
 
     gl.disable(gl.DEPTH_TEST);
   }
@@ -108,7 +114,10 @@ export default class ElevationLayer extends Layer {
   getModel(gl) {
     const shaders = this.getShaders();
     // 3d surface
-    const vsShader = assembleShaders(gl, {vs: shaders.vs, fs: ''}).vs;
+    const vsShader = assembleShaders(gl, {
+      vs: shaders.vs,
+      fs: ''
+    }).vs;
 
     // FIXME - assembleShaders doesn't support fragment shaders
     const fsSource = assembleShaders(gl, {
