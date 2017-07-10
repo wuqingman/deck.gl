@@ -54,8 +54,7 @@ export default class DelaunayCoverLayer extends Layer {
 
     const shaders = assembleShaders(gl, this.getShaders());
 
-    const model = new Model({
-      gl,
+    const model = new Model(gl, {
       id: 'delaunay',
       program: new Program(gl, shaders),
       geometry: new Geometry({

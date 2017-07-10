@@ -303,7 +303,7 @@ export default class ParticleLayer extends Layer {
   getModelTF({gl, boundingBox, originalBoundingBox, nx, ny, texData}) {
     const positions3 = this.calculatePositions3({nx, ny});
 
-    const modelTF = new Model({
+    const modelTF = new Model(gl, {
       program: new ProgramTransformFeedback(gl, assembleShaders(gl, {
         vs: vertexTF,
         fs: fragmentTF
@@ -330,7 +330,7 @@ export default class ParticleLayer extends Layer {
 
     const positions3 = this.calculatePositions3({nx, ny});
 
-    return new Model({
+    return new Model(gl, {
       program: new Program(gl, assembleShaders(gl, {
         vs: vertex,
         fs: fragment

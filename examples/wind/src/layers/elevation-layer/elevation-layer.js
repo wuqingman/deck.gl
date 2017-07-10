@@ -140,8 +140,7 @@ ${fsSource}`;
       boundingBox
     });
 
-    return new Model({
-      gl,
+    return new Model(gl, {
       id: this.props.id,
       vs: vsShader,
       fs: fsShader,

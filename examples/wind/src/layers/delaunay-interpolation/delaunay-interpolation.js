@@ -53,8 +53,7 @@ export default class DelaunayInterpolation {
 
     const shaders = assembleShaders(gl, this.getDelaunayShaders());
 
-    return new Model({
-      gl,
+    return new Model(gl, {
       id: 'delaunay',
       program: new Program(gl, shaders),
       geometry: new Geometry({
