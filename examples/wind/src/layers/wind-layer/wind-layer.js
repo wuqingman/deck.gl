@@ -1,8 +1,8 @@
 /* global Image */
 import {Layer, assembleShaders} from 'deck.gl';
-import {GL, Model, Geometry, Program, Texture2D} from 'luma.gl';
+import {GL, Model, Geometry, Program} from 'luma.gl';
 
-// import DelaunayInterpolation from '../delaunay-interpolation/delaunay-interpolation';
+import DelaunayInterpolation from '../delaunay-interpolation/delaunay-interpolation';
 import {
   ELEVATION_DATA_IMAGE, ELEVATION_DATA_BOUNDS, ELEVATION_RANGE, LIGHT_UNIFORMS
 } from '../../defaults';
@@ -216,90 +216,8 @@ export default class WindLayer extends Layer {
       options.parameters = opt.parameters;
     }
 
-    // return new DelaunayInterpolation({gl})
-    //   .createTexture(gl, options);
-
-    // gl.getExtension('EXT_color_buffer_float');
-
-    const optsUpdated = Object.assign({
-      textureType: gl.TEXTURE_2D,
-      pixelStore: [
-        {name: gl.UNPACK_FLIP_Y_WEBGL, value: true}
-      ],
-      parameters: [
-        {name: gl.TEXTURE_MAG_FILTER, value: gl.NEAREST},
-        {name: gl.TEXTURE_MIN_FILTER, value: gl.NEAREST},
-        {name: gl.TEXTURE_WRAP_S, value: gl.CLAMP_TO_EDGE},
-        {name: gl.TEXTURE_WRAP_T, value: gl.CLAMP_TO_EDGE}
-      ],
-      data: {
-        internalFormat: gl.RGBA32F,
-        format: gl.RGBA,
-        value: false,
-        type: gl.FLOAT,
-
-        width: 0,
-        height: 0,
-        border: 0
-      }
-    }, options);
-
-    // const textureType = optsUpdated.textureType;
-    // const textureTarget = textureType;
-    const pixelStore = optsUpdated.pixelStore;
-    // const parameters = optsUpdated.parameters;
-    const data = optsUpdated.data;
-    // const value = data.value;
-    const type = data.type;
-    const format = data.format;
-    const internalFormat = data.internalFormat;
-    // const hasValue = Boolean(data.value);
-
-    const texture = new Texture2D(gl, {
-      // pixels: value, //TODO: verify hasValue is always false.
-      format: internalFormat,
-      dataFormat: format,
-      type, // TODO: type should be Float, for now defaulting to bye type
-      border: data.border,
-      parameters: {
-        [gl.TEXTURE_MAG_FILTER]: gl.NEAREST,
-        [gl.TEXTURE_MIN_FILTER]: gl.NEAREST,
-        [gl.TEXTURE_WRAP_S]: gl.CLAMP_TO_EDGE,
-        [gl.TEXTURE_WRAP_T]: gl.CLAMP_TO_EDGE
-      },
-      pixelStore: {[gl.UNPACK_FLIP_Y_WEBGL]: true}
-    });
-
-    // const texture = gl.createTexture();
-    // gl.bindTexture(textureType, texture);
-    //
-    // set texture properties
-    // TODO: right now this does a global setting, apply this using withParameters
-    // for texImage2D and textSubImage2D calls.
-    pixelStore.forEach(option => gl.pixelStorei(option.name, option.value));
-
-    // load texture
-    // if (hasValue) {
-    //   if ((data.width || data.height) && (!value.width && !value.height)) {
-    //     gl.texImage2D(textureTarget, 0, internalFormat, data.width, data.height,
-    //       data.border, format, type, value, 0);
-    //   } else {
-    //     gl.texImage2D(textureTarget, 0, internalFormat, format, type, value);
-    //   }
-    //
-    // // we're setting a texture to a framebuffer
-    // } else if (data.width || data.height) {
-    //   gl.texImage2D(textureTarget, 0, internalFormat, data.width, data.height,
-    //     data.border, format, type, null);
-    // }
-    // // set texture parameters
-    // for (let i = 0; i < parameters.length; i++) {
-    //   const opti = parameters[i];
-    //   gl.texParameteri(textureType, opti.name, opti.value);
-    // }
-
-    return texture;
-
+    return new DelaunayInterpolation({gl})
+      .createTextureNew(gl, options);
   }
 
   calculatePositions({nx, ny, originalBoundingBox}) {

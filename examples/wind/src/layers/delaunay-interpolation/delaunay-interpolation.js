@@ -1,9 +1,12 @@
 /* global document */
 import {assembleShaders} from 'deck.gl';
-import {Model, Geometry, Program, createGLContext} from 'luma.gl';
+import {
+  Model, Geometry, Program, createGLContext,
+  Texture2D, Renderbuffer, Framebuffer} from 'luma.gl';
 
 import vertex from './delaunay-interpolation-vertex.glsl';
 import fragment from './delaunay-interpolation-fragment.glsl';
+import assert from 'assert';
 
 export default class DelaunayInterpolation {
   constructor(opts) {
@@ -64,6 +67,7 @@ export default class DelaunayInterpolation {
     });
   }
 
+  // TODO: replace this with createTextureNew once all its usages are fixed.
   createTexture(gl, options) {
     gl.getExtension('EXT_color_buffer_float');
 
@@ -130,6 +134,91 @@ export default class DelaunayInterpolation {
     return texture;
   }
 
+  createTextureNew(gl, options) {
+    // gl.getExtension('EXT_color_buffer_float');
+
+    const opt = Object.assign({
+      textureType: gl.TEXTURE_2D,
+      pixelStore: [
+        {name: gl.UNPACK_FLIP_Y_WEBGL, value: true}
+      ],
+      parameters: [
+        {name: gl.TEXTURE_MAG_FILTER, value: gl.NEAREST},
+        {name: gl.TEXTURE_MIN_FILTER, value: gl.NEAREST},
+        {name: gl.TEXTURE_WRAP_S, value: gl.CLAMP_TO_EDGE},
+        {name: gl.TEXTURE_WRAP_T, value: gl.CLAMP_TO_EDGE}
+      ],
+      data: {
+        internalFormat: gl.RGBA32F,
+        format: gl.RGBA,
+        value: false,
+        type: gl.FLOAT,
+
+        width: 0,
+        height: 0,
+        border: 0
+      }
+    }, options);
+
+    // const textureType = opt.textureType;
+    // const textureTarget = textureType;
+    const pixelStore = opt.pixelStore;
+    // const parameters = opt.parameters;
+    const data = opt.data;
+    // const value = data.value;
+    const type = data.type;
+    const format = data.format;
+    const internalFormat = data.internalFormat;
+    const hasValue = Boolean(data.value);
+
+    assert(hasValue !== true, 'Handling only hasValue = true cases');
+
+    const texture = new Texture2D(gl, {
+      // pixels: value, //TODO: verify hasValue is always false.
+      format: internalFormat,
+      dataFormat: format,
+      type, // TODO: type should be Float, for now defaulting to bye type
+      border: data.border,
+      parameters: {
+        [gl.TEXTURE_MAG_FILTER]: gl.NEAREST,
+        [gl.TEXTURE_MIN_FILTER]: gl.NEAREST,
+        [gl.TEXTURE_WRAP_S]: gl.CLAMP_TO_EDGE,
+        [gl.TEXTURE_WRAP_T]: gl.CLAMP_TO_EDGE
+      },
+      pixelStore: {[gl.UNPACK_FLIP_Y_WEBGL]: true}
+    });
+
+    // const texture = gl.createTexture();
+    // gl.bindTexture(textureType, texture);
+    //
+    // set texture properties
+    // TODO: right now this does a global setting, apply this using withParameters
+    // for texImage2D and textSubImage2D calls.
+    pixelStore.forEach(option => gl.pixelStorei(option.name, option.value));
+
+    // load texture
+    // if (hasValue) {
+    //   if ((data.width || data.height) && (!value.width && !value.height)) {
+    //     gl.texImage2D(textureTarget, 0, internalFormat, data.width, data.height,
+    //       data.border, format, type, value, 0);
+    //   } else {
+    //     gl.texImage2D(textureTarget, 0, internalFormat, format, type, value);
+    //   }
+    //
+    // // we're setting a texture to a framebuffer
+    // } else if (data.width || data.height) {
+    //   gl.texImage2D(textureTarget, 0, internalFormat, data.width, data.height,
+    //     data.border, format, type, null);
+    // }
+    // // set texture parameters
+    // for (let i = 0; i < parameters.length; i++) {
+    //   const opti = parameters[i];
+    //   gl.texParameteri(textureType, opti.name, opti.value);
+    // }
+
+    return texture;
+  }
+
   createRenderbuffer(gl, options) {
     const opt = Object.assign({
       storageType: gl.DEPTH_COMPONENT16,
@@ -137,11 +226,11 @@ export default class DelaunayInterpolation {
       height: 0
     }, options);
 
-    const renderBuffer = gl.createRenderbuffer(gl.RENDERBUFFER);
-    gl.bindRenderbuffer(gl.RENDERBUFFER, renderBuffer);
-    gl.renderbufferStorage(gl.RENDERBUFFER, opt.storageType, opt.width, opt.height);
-
-    return renderBuffer;
+    return new Renderbuffer(gl, {
+      format: opt.storageType,
+      width: opt.width,
+      height: opt.height
+    });
   }
 
   createFramebufferWithTexture(gl, options) {
@@ -161,21 +250,17 @@ export default class DelaunayInterpolation {
     }, options.fb);
 
     gl.bindFramebuffer(gl.FRAMEBUFFER, null);
-    // create fb
-    const fb = gl.createFramebuffer();
-    gl.bindFramebuffer(gl.FRAMEBUFFER, fb);
-    // create txt
-    const texture = this.createTexture(gl, options.txt);
 
-    const texOpt = opt.textureOptions;
-
-    // bind to texture
-    gl.framebufferTexture2D(gl.FRAMEBUFFER, texOpt.attachment, gl.TEXTURE_2D, texture, 0);
-
-    // create rb
+    const texture = this.createTextureNew(gl, options.txt);
     const rb = this.createRenderbuffer(gl, options.rb);
-    gl.framebufferRenderbuffer(gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, gl.RENDERBUFFER, rb);
-
+    const fb = new Framebuffer(gl, {
+      width: opt.width,
+      height: opt.height,
+      attachments: {
+        [gl.COLOR_ATTACHMENT0]: texture,
+        [gl.DEPTH_ATTACHMENT]: rb
+      }
+    });
     return {fb, rb, texture};
   }
 
@@ -233,7 +318,8 @@ export default class DelaunayInterpolation {
 
     const textures = measures.map((measure, hour) => {
       const sample = [];
-      gl.bindFramebuffer(gl.FRAMEBUFFER, fb);
+      fb.bind();
+      // gl.bindFramebuffer(gl.FRAMEBUFFER, fb);
       gl.viewport(0, 0, width, height);
       gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
@@ -294,7 +380,7 @@ export default class DelaunayInterpolation {
         size: [width, height]
       });
 
-      gl.bindTexture(gl.TEXTURE_2D, texture);
+      // gl.bindTexture(gl.TEXTURE_2D, texture);
 
       // read texture back
       const pixels = new Float32Array(width * height * 4);
@@ -318,8 +404,9 @@ export default class DelaunayInterpolation {
       //   document.body.appendChild(canvas);
       // });
 
-      gl.bindTexture(gl.TEXTURE_2D, null);
-      gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+      // gl.bindTexture(gl.TEXTURE_2D, null);
+      // gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+      fb.unbind();
 
       return pixels;
     });
