@@ -106,18 +106,28 @@ export default class WindLayer extends Layer {
     // })
 
     textureFrom.bind(0);
-    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA32F, width, height,
-      0, gl.RGBA, gl.FLOAT,
-      dataTextureArray[timeInterval | 0], 0);
+    textureFrom.setImageData({
+      pixels: dataTextureArray[timeInterval | 0],
+      width,
+      height,
+      format: gl.RGBA32F,
+      type: gl.FLOAT,
+      dataFormat: gl.RGBA
+    });
 
     // gl.bindTexture(gl.TEXTURE_2D, null);
     // gl.bindTexture(gl.TEXTURE_2D, textureTo);
     // gl.activeTexture(gl.TEXTURE1);
     // gl.bindTexture(gl.TEXTURE_2D, textureTo);
     textureTo.bind(1);
-    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA32F, width, height,
-      0, gl.RGBA, gl.FLOAT,
-      dataTextureArray[timeInterval | 0 + 1], 0);
+    textureTo.setImageData({
+      pixels: dataTextureArray[timeInterval | 0 + 1],
+      width,
+      height,
+      format: gl.RGBA32F,
+      type: gl.FLOAT,
+      dataFormat: gl.RGBA
+    });
 
     if (data && data.img) {
       // gl.bindTexture(gl.TEXTURE_2D, null);
@@ -125,8 +135,14 @@ export default class WindLayer extends Layer {
       // gl.activeTexture(gl.TEXTURE2);
       // gl.bindTexture(gl.TEXTURE_2D, elevationTexture);
       elevationTexture.bind(2);
-      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, elevationWidth, elevationHeight,
-        0, gl.RGBA, gl.UNSIGNED_BYTE, data.img);
+      elevationTexture.setImageData({
+        pixels: data.img,
+        width: elevationWidth,
+        height: elevationHeight,
+        format: gl.RGBA,
+        type: gl.UNSIGNED_BYTE,
+        dataFormat: gl.RGBA
+      });
     }
 
     gl.clearDepth(1.0);
