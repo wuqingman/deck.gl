@@ -115,7 +115,7 @@ export default class ParticleLayer extends Layer {
 
     this.runTransformFeedback({gl});
 
-    const {model} = this.state;
+    const {model, textureFrom, textureTo} = this.state;
     model.setUniforms({
       boundingBox: [boundingBox.minLng, boundingBox.maxLng, boundingBox.minLat, boundingBox.maxLat],
       bounds0: [dataBounds[0].min, dataBounds[0].max],
@@ -124,8 +124,8 @@ export default class ParticleLayer extends Layer {
       color0: [83, 185, 148].map(d => d / 255),
       color1: [255, 255, 174].map(d => d / 255),
       color2: [241, 85, 46].map(d => d / 255),
-      dataFrom: 0,
-      dataTo: 1,
+      dataFrom: textureFrom,
+      dataTo: textureTo,
       elevationTexture: 2,
       elevationBounds: ELEVATION_DATA_BOUNDS,
       elevationRange: ELEVATION_RANGE,
@@ -139,33 +139,60 @@ export default class ParticleLayer extends Layer {
 
     const {textureArray} = texData;
     const {
-      textureFrom, textureTo, width, height,
+      width, height,
       elevationTexture, elevationWidth, elevationHeight,
       bufferTo, bufferFrom,
       timeInterval
     } = this.state;
 
     // upload texture (data) before rendering
-    gl.bindTexture(gl.TEXTURE_2D, textureFrom);
-    gl.activeTexture(gl.TEXTURE0);
-    gl.bindTexture(gl.TEXTURE_2D, textureFrom);
-    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA32F, width, height, 0, gl.RGBA, gl.FLOAT,
-      textureArray[timeInterval], 0);
-    gl.bindTexture(gl.TEXTURE_2D, null);
+    // gl.bindTexture(gl.TEXTURE_2D, textureFrom);
+    // gl.activeTexture(gl.TEXTURE0);
+    // gl.bindTexture(gl.TEXTURE_2D, textureFrom);
+    // gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA32F, width, height, 0, gl.RGBA, gl.FLOAT,
+    //   textureArray[timeInterval], 0);
+    // gl.bindTexture(gl.TEXTURE_2D, null);
+    textureFrom.bind(0);
+    textureFrom.setImageData({
+      pixels: textureArray[timeInterval],
+      width,
+      height,
+      format: gl.RGBA32F,
+      type: gl.FLOAT,
+      dataFormat: gl.RGBA
+    });
 
-    gl.bindTexture(gl.TEXTURE_2D, textureTo);
-    gl.activeTexture(gl.TEXTURE1);
-    gl.bindTexture(gl.TEXTURE_2D, textureTo);
-    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA32F, width, height, 0, gl.RGBA, gl.FLOAT,
-      textureArray[timeInterval + 1], 0);
-    gl.bindTexture(gl.TEXTURE_2D, null);
+    // gl.bindTexture(gl.TEXTURE_2D, textureTo);
+    // gl.activeTexture(gl.TEXTURE1);
+    // gl.bindTexture(gl.TEXTURE_2D, textureTo);
+    // gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA32F, width, height, 0, gl.RGBA, gl.FLOAT,
+    //   textureArray[timeInterval + 1], 0);
+    // gl.bindTexture(gl.TEXTURE_2D, null);
+    textureTo.bind(1);
+    textureTo.setImageData({
+      pixels: textureArray[timeInterval + 1],
+      width,
+      height,
+      format: gl.RGBA32F,
+      type: gl.FLOAT,
+      dataFormat: gl.RGBA
+    });
 
     if (state.data && state.data.img) {
-      gl.bindTexture(gl.TEXTURE_2D, elevationTexture);
-      gl.activeTexture(gl.TEXTURE2);
-      gl.bindTexture(gl.TEXTURE_2D, elevationTexture);
-      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, elevationWidth, elevationHeight,
-        0, gl.RGBA, gl.UNSIGNED_BYTE, state.data.img);
+      // gl.bindTexture(gl.TEXTURE_2D, elevationTexture);
+      // gl.activeTexture(gl.TEXTURE2);
+      // gl.bindTexture(gl.TEXTURE_2D, elevationTexture);
+      // gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, elevationWidth, elevationHeight,
+      //   0, gl.RGBA, gl.UNSIGNED_BYTE, state.data.img);
+      elevationTexture.bind(2);
+      elevationTexture.setImageData({
+        pixels: state.data.img,
+        width: elevationWidth,
+        height: elevationHeight,
+        format: gl.RGBA,
+        type: gl.UNSIGNED_BYTE,
+        dataFormat: gl.RGBA
+      });
     }
 
     const loc = model.program._attributeLocations.posFrom;
@@ -241,8 +268,8 @@ export default class ParticleLayer extends Layer {
       bounds0: [dataBounds[0].min, dataBounds[0].max],
       bounds1: [dataBounds[1].min, dataBounds[1].max],
       bounds2: [dataBounds[2].min, dataBounds[2].max],
-      dataFrom: 0,
-      dataTo: 1,
+      dataFrom: textureFrom,
+      dataTo: textureTo,
       time,
       flip
     });
@@ -254,16 +281,34 @@ export default class ParticleLayer extends Layer {
 
     // upload texture (data) before rendering
     // gl.bindTexture(gl.TEXTURE_2D, textureFrom);
-    gl.activeTexture(gl.TEXTURE0);
-    gl.bindTexture(gl.TEXTURE_2D, textureFrom);
-    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA32F, width, height, 0, gl.RGBA, gl.FLOAT,
-      textureArray[timeInterval], 0);
+    // gl.activeTexture(gl.TEXTURE0);
+    // gl.bindTexture(gl.TEXTURE_2D, textureFrom);
+    // gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA32F, width, height, 0, gl.RGBA, gl.FLOAT,
+    //   textureArray[timeInterval], 0);
+    textureFrom.bind(0);
+    textureFrom.setImageData({
+      pixels: textureArray[timeInterval],
+      width,
+      height,
+      format: gl.RGBA32F,
+      type: gl.FLOAT,
+      dataFormat: gl.RGBA
+    });
 
     // gl.bindTexture(gl.TEXTURE_2D, textureTo);
-    gl.activeTexture(gl.TEXTURE1);
-    gl.bindTexture(gl.TEXTURE_2D, textureTo);
-    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA32F, width, height, 0, gl.RGBA, gl.FLOAT,
-      textureArray[timeInterval + 1], 0);
+    // gl.activeTexture(gl.TEXTURE1);
+    // gl.bindTexture(gl.TEXTURE_2D, textureTo);
+    // gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA32F, width, height, 0, gl.RGBA, gl.FLOAT,
+    //   textureArray[timeInterval + 1], 0);
+    textureTo.bind(1);
+    textureTo.setImageData({
+      pixels: textureArray[timeInterval + 1],
+      width,
+      height,
+      format: gl.RGBA32F,
+      type: gl.FLOAT,
+      dataFormat: gl.RGBA
+    });
 
     // setup transform feedback
     gl.enable(gl.RASTERIZER_DISCARD);
@@ -370,7 +415,7 @@ export default class ParticleLayer extends Layer {
     }
 
     return new DelaunayInterpolation({gl})
-      .createTexture(gl, options);
+      .createTextureNew(gl, options);
   }
 
   calculatePositions3({nx, ny}) {
