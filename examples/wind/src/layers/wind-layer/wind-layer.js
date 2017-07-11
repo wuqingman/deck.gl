@@ -1,8 +1,8 @@
 /* global Image */
 import {Layer, assembleShaders} from 'deck.gl';
-import {GL, Model, Geometry, Program} from 'luma.gl';
+import {GL, Model, Geometry, Program, Texture2D} from 'luma.gl';
 
-import DelaunayInterpolation from '../delaunay-interpolation/delaunay-interpolation';
+// import DelaunayInterpolation from '../delaunay-interpolation/delaunay-interpolation';
 import {
   ELEVATION_DATA_IMAGE, ELEVATION_DATA_BOUNDS, ELEVATION_RANGE, LIGHT_UNIFORMS
 } from '../../defaults';
@@ -90,27 +90,41 @@ export default class WindLayer extends Layer {
     const {boundingBox, dataBounds, dataTextureArray} = this.props;
 
     // upload texture (data) before rendering
-    gl.bindTexture(gl.TEXTURE_2D, null);
-    gl.bindTexture(gl.TEXTURE_2D, textureFrom);
-    gl.activeTexture(gl.TEXTURE0);
-    gl.bindTexture(gl.TEXTURE_2D, textureFrom);
+    // gl.bindTexture(gl.TEXTURE_2D, null);
+    // gl.bindTexture(gl.TEXTURE_2D, textureFrom);
+    // gl.activeTexture(gl.TEXTURE0);
+    // gl.bindTexture(gl.TEXTURE_2D, textureFrom);
+    // gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA32F, width, height,
+    //   0, gl.RGBA, gl.FLOAT,
+    //   dataTextureArray[timeInterval | 0], 0);
+
+    // textureFrom.subImage({
+    //   pixels: dataTextureArray[timeInterval | 0],
+    //   width,
+    //   height,
+    //   format: gl.RGBA32F
+    // })
+
+    textureFrom.bind(0);
     gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA32F, width, height,
       0, gl.RGBA, gl.FLOAT,
       dataTextureArray[timeInterval | 0], 0);
 
-    gl.bindTexture(gl.TEXTURE_2D, null);
-    gl.bindTexture(gl.TEXTURE_2D, textureTo);
-    gl.activeTexture(gl.TEXTURE1);
-    gl.bindTexture(gl.TEXTURE_2D, textureTo);
+    // gl.bindTexture(gl.TEXTURE_2D, null);
+    // gl.bindTexture(gl.TEXTURE_2D, textureTo);
+    // gl.activeTexture(gl.TEXTURE1);
+    // gl.bindTexture(gl.TEXTURE_2D, textureTo);
+    textureTo.bind(1);
     gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA32F, width, height,
       0, gl.RGBA, gl.FLOAT,
       dataTextureArray[timeInterval | 0 + 1], 0);
 
     if (data && data.img) {
-      gl.bindTexture(gl.TEXTURE_2D, null);
-      gl.bindTexture(gl.TEXTURE_2D, elevationTexture);
-      gl.activeTexture(gl.TEXTURE2);
-      gl.bindTexture(gl.TEXTURE_2D, elevationTexture);
+      // gl.bindTexture(gl.TEXTURE_2D, null);
+      // gl.bindTexture(gl.TEXTURE_2D, elevationTexture);
+      // gl.activeTexture(gl.TEXTURE2);
+      // gl.bindTexture(gl.TEXTURE_2D, elevationTexture);
+      elevationTexture.bind(2);
       gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, elevationWidth, elevationHeight,
         0, gl.RGBA, gl.UNSIGNED_BYTE, data.img);
     }
@@ -126,9 +140,9 @@ export default class WindLayer extends Layer {
       bounds0: [dataBounds[0].min, dataBounds[0].max],
       bounds1: [dataBounds[1].min, dataBounds[1].max],
       bounds2: [dataBounds[2].min, dataBounds[2].max],
-      dataFrom: 0,
-      dataTo: 1,
-      elevationTexture: 2,
+      dataFrom: textureFrom,
+      dataTo: textureTo,
+      elevationTexture,
       elevationBounds: ELEVATION_DATA_BOUNDS,
       elevationRange: ELEVATION_RANGE
     }));
@@ -186,8 +200,90 @@ export default class WindLayer extends Layer {
       options.parameters = opt.parameters;
     }
 
-    return new DelaunayInterpolation({gl})
-      .createTexture(gl, options);
+    // return new DelaunayInterpolation({gl})
+    //   .createTexture(gl, options);
+
+    // gl.getExtension('EXT_color_buffer_float');
+
+    const optsUpdated = Object.assign({
+      textureType: gl.TEXTURE_2D,
+      pixelStore: [
+        {name: gl.UNPACK_FLIP_Y_WEBGL, value: true}
+      ],
+      parameters: [
+        {name: gl.TEXTURE_MAG_FILTER, value: gl.NEAREST},
+        {name: gl.TEXTURE_MIN_FILTER, value: gl.NEAREST},
+        {name: gl.TEXTURE_WRAP_S, value: gl.CLAMP_TO_EDGE},
+        {name: gl.TEXTURE_WRAP_T, value: gl.CLAMP_TO_EDGE}
+      ],
+      data: {
+        internalFormat: gl.RGBA32F,
+        format: gl.RGBA,
+        value: false,
+        type: gl.FLOAT,
+
+        width: 0,
+        height: 0,
+        border: 0
+      }
+    }, options);
+
+    // const textureType = optsUpdated.textureType;
+    // const textureTarget = textureType;
+    const pixelStore = optsUpdated.pixelStore;
+    // const parameters = optsUpdated.parameters;
+    const data = optsUpdated.data;
+    // const value = data.value;
+    const type = data.type;
+    const format = data.format;
+    const internalFormat = data.internalFormat;
+    // const hasValue = Boolean(data.value);
+
+    const texture = new Texture2D(gl, {
+      // pixels: value, //TODO: verify hasValue is always false.
+      format: internalFormat,
+      dataFormat: format,
+      type, // TODO: type should be Float, for now defaulting to bye type
+      border: data.border,
+      parameters: {
+        [gl.TEXTURE_MAG_FILTER]: gl.NEAREST,
+        [gl.TEXTURE_MIN_FILTER]: gl.NEAREST,
+        [gl.TEXTURE_WRAP_S]: gl.CLAMP_TO_EDGE,
+        [gl.TEXTURE_WRAP_T]: gl.CLAMP_TO_EDGE
+      },
+      pixelStore: {[gl.UNPACK_FLIP_Y_WEBGL]: true}
+    });
+
+    // const texture = gl.createTexture();
+    // gl.bindTexture(textureType, texture);
+    //
+    // set texture properties
+    // TODO: right now this does a global setting, apply this using withParameters
+    // for texImage2D and textSubImage2D calls.
+    pixelStore.forEach(option => gl.pixelStorei(option.name, option.value));
+
+    // load texture
+    // if (hasValue) {
+    //   if ((data.width || data.height) && (!value.width && !value.height)) {
+    //     gl.texImage2D(textureTarget, 0, internalFormat, data.width, data.height,
+    //       data.border, format, type, value, 0);
+    //   } else {
+    //     gl.texImage2D(textureTarget, 0, internalFormat, format, type, value);
+    //   }
+    //
+    // // we're setting a texture to a framebuffer
+    // } else if (data.width || data.height) {
+    //   gl.texImage2D(textureTarget, 0, internalFormat, data.width, data.height,
+    //     data.border, format, type, null);
+    // }
+    // // set texture parameters
+    // for (let i = 0; i < parameters.length; i++) {
+    //   const opti = parameters[i];
+    //   gl.texParameteri(textureType, opti.name, opti.value);
+    // }
+
+    return texture;
+
   }
 
   calculatePositions({nx, ny, originalBoundingBox}) {
