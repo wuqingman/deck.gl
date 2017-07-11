@@ -116,7 +116,25 @@ export default class ParticleLayer extends Layer {
     this.runTransformFeedback({gl});
 
     const {model, textureFrom, textureTo} = this.state;
-    model.setUniforms({
+    // model.setUniforms({
+    //   boundingBox: [boundingBox.minLng,
+    //     boundingBox.maxLng,
+    //     boundingBox.minLat,
+    //     boundingBox.maxLat],
+    //   bounds0: [dataBounds[0].min, dataBounds[0].max],
+    //   bounds1: [dataBounds[1].min, dataBounds[1].max],
+    //   bounds2: [dataBounds[2].min, dataBounds[2].max],
+    //   color0: [83, 185, 148].map(d => d / 255),
+    //   color1: [255, 255, 174].map(d => d / 255),
+    //   color2: [241, 85, 46].map(d => d / 255),
+    //   dataFrom: textureFrom,
+    //   dataTo: textureTo,
+    //   elevationTexture: 2,
+    //   elevationBounds: ELEVATION_DATA_BOUNDS,
+    //   elevationRange: ELEVATION_RANGE,
+    //   zScale: props.zScale
+    // });
+    const currentUniforms = {
       boundingBox: [boundingBox.minLng, boundingBox.maxLng, boundingBox.minLat, boundingBox.maxLat],
       bounds0: [dataBounds[0].min, dataBounds[0].max],
       bounds1: [dataBounds[1].min, dataBounds[1].max],
@@ -130,7 +148,7 @@ export default class ParticleLayer extends Layer {
       elevationBounds: ELEVATION_DATA_BOUNDS,
       elevationRange: ELEVATION_RANGE,
       zScale: props.zScale
-    });
+    };
 
     gl.enable(gl.BLEND);
     gl.blendFunc(gl.SRC_ALPHA, gl.ONE);
@@ -202,7 +220,7 @@ export default class ParticleLayer extends Layer {
     gl.vertexAttribDivisor(loc, 0);
     // gl.bindBuffer(gl.ARRAY_BUFFER, null);
 
-    this.state.model.render(Object.assign({}, uniforms, {}));
+    this.state.model.render(Object.assign({}, currentUniforms, uniforms));
 
     // Swap the buffers
     this.setState({
@@ -256,23 +274,23 @@ export default class ParticleLayer extends Layer {
     }
 
     // set uniforms
-    modelTF.setUniforms({
-      boundingBox: [
-        boundingBox.minLng, boundingBox.maxLng,
-        boundingBox.minLat, boundingBox.maxLat
-      ],
-      originalBoundingBox: [
-        originalBoundingBox.minLng, originalBoundingBox.maxLng,
-        originalBoundingBox.minLat, originalBoundingBox.maxLat
-      ],
-      bounds0: [dataBounds[0].min, dataBounds[0].max],
-      bounds1: [dataBounds[1].min, dataBounds[1].max],
-      bounds2: [dataBounds[2].min, dataBounds[2].max],
-      dataFrom: textureFrom,
-      dataTo: textureTo,
-      time,
-      flip
-    });
+    // modelTF.setUniforms({
+    //   boundingBox: [
+    //     boundingBox.minLng, boundingBox.maxLng,
+    //     boundingBox.minLat, boundingBox.maxLat
+    //   ],
+    //   originalBoundingBox: [
+    //     originalBoundingBox.minLng, originalBoundingBox.maxLng,
+    //     originalBoundingBox.minLat, originalBoundingBox.maxLat
+    //   ],
+    //   bounds0: [dataBounds[0].min, dataBounds[0].max],
+    //   bounds1: [dataBounds[1].min, dataBounds[1].max],
+    //   bounds2: [dataBounds[2].min, dataBounds[2].max],
+    //   dataFrom: textureFrom,
+    //   dataTo: textureTo,
+    //   time,
+    //   flip
+    // });
 
     if (flip > 0) {
       flip = -1;
@@ -331,6 +349,23 @@ export default class ParticleLayer extends Layer {
         [GL.RASTERIZER_DISCARD]: true
       }
       */
+      {
+        boundingBox: [
+          boundingBox.minLng, boundingBox.maxLng,
+          boundingBox.minLat, boundingBox.maxLat
+        ],
+        originalBoundingBox: [
+          originalBoundingBox.minLng, originalBoundingBox.maxLng,
+          originalBoundingBox.minLat, originalBoundingBox.maxLat
+        ],
+        bounds0: [dataBounds[0].min, dataBounds[0].max],
+        bounds1: [dataBounds[1].min, dataBounds[1].max],
+        bounds2: [dataBounds[2].min, dataBounds[2].max],
+        dataFrom: textureFrom,
+        dataTo: textureTo,
+        time,
+        flip
+      }
     );
 
     gl.endTransformFeedback();
@@ -378,7 +413,8 @@ export default class ParticleLayer extends Layer {
     return new Model(gl, {
       program: new Program(gl, assembleShaders(gl, {
         vs: vertex,
-        fs: fragment
+        fs: fragment,
+        modules: ['project']
       })),
       geometry: new Geometry({
         id: this.props.id,

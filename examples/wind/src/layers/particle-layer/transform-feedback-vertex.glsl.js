@@ -41,7 +41,7 @@ uniform vec2 bounds0;
 uniform vec2 bounds1;
 uniform vec2 bounds2;
 
-attribute vec3 positions;
+//attribute vec3 positions;
 attribute vec4 posFrom;
 
 float rand(vec2 co){

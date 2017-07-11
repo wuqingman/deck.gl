@@ -191,7 +191,8 @@ export default class WindLayer extends Layer {
     return new Model(gl, {
       program: new Program(gl, assembleShaders(gl, {
         vs: vertex,
-        fs: fragment
+        fs: fragment,
+        modules: ['project']
       })),
       isIndexed: false,
       isInstanced: true,
