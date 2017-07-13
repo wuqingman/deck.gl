@@ -1,6 +1,6 @@
 /* global Image */
-import {Layer, assembleShaders} from 'deck.gl';
-import {GL, Model, Geometry, Program} from 'luma.gl';
+import {Layer} from 'deck.gl';
+import {GL, Model, Geometry} from 'luma.gl';
 
 import DelaunayInterpolation from '../delaunay-interpolation/delaunay-interpolation';
 import {
@@ -189,11 +189,9 @@ export default class WindLayer extends Layer {
     });
 
     return new Model(gl, {
-      program: new Program(gl, assembleShaders(gl, {
-        vs: vertex,
-        fs: fragment,
-        modules: ['project']
-      })),
+      vs: vertex,
+      fs: fragment,
+      modules: ['project'],
       isIndexed: false,
       isInstanced: true,
       geometry

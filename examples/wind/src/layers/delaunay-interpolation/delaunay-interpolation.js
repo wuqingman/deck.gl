@@ -1,5 +1,4 @@
 /* global document */
-// import {assembleShaders} from 'deck.gl';
 import {
   Model, Geometry, createGLContext,
   Texture2D, Renderbuffer, Framebuffer} from 'luma.gl';
@@ -54,7 +53,6 @@ export default class DelaunayInterpolation {
       -triangle[2].long, triangle[2].lat, triangle[2].elv
     ));
 
-    // const shaders = assembleShaders(gl, this.getDelaunayShaders());
     const shaders = this.getDelaunayShaders();
 
     return new Model(gl, {

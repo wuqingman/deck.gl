@@ -116,18 +116,6 @@ export default class ElevationLayer extends Layer {
     // 3d surface
     const vsShader = shaders.vs;
     const fsSource = shaders.fs;
-//     const vsShader = assembleShaders(gl, {
-//       vs: shaders.vs,
-//       fs: ''
-// //      modules: ['project', 'lighting']
-//     }).vs;
-//
-//     // FIXME - assembleShaders doesn't support fragment shaders
-//     const fsSource = assembleShaders(gl, {
-//       vs: shaders.fs,
-//       fs: ''
-// //      modules: ['project', 'lighting']
-//     }).vs;
 
     const fsShader = `\
 #ifdef GL_ES

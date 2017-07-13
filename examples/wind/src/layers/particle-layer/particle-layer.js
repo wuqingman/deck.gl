@@ -1,6 +1,6 @@
 /* global Image */
-import {Layer, assembleShaders} from 'deck.gl';
-import {GL, Model, Geometry, Program} from 'luma.gl';
+import {Layer} from 'deck.gl';
+import {GL, Model, Geometry} from 'luma.gl';
 import ProgramTransformFeedback from './program-transform-feedback';
 
 import DelaunayInterpolation from '../delaunay-interpolation/delaunay-interpolation';
@@ -384,10 +384,11 @@ export default class ParticleLayer extends Layer {
     const positions3 = this.calculatePositions3({nx, ny});
 
     const modelTF = new Model(gl, {
-      program: new ProgramTransformFeedback(gl, assembleShaders(gl, {
+      program: new ProgramTransformFeedback(gl, {
         vs: vertexTF,
         fs: fragmentTF
-      })),
+      }),
+      modules: ['project'],
       geometry: new Geometry({
         id: this.props.id,
         // FIXME - change to GL.POINTS when luma assert is fixed
@@ -411,11 +412,9 @@ export default class ParticleLayer extends Layer {
     const positions3 = this.calculatePositions3({nx, ny});
 
     return new Model(gl, {
-      program: new Program(gl, assembleShaders(gl, {
-        vs: vertex,
-        fs: fragment,
-        modules: ['project']
-      })),
+      vs: vertex,
+      fs: fragment,
+      modules: ['project'],
       geometry: new Geometry({
         id: this.props.id,
         // FIXME - Update to GL.POINTS once assert in luma has been fixed

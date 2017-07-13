@@ -1,4 +1,4 @@
-import {Layer, assembleShaders} from 'deck.gl';
+import {Layer} from 'deck.gl';
 import {Model, Geometry, Program} from 'luma.gl';
 
 import vertex from './delaunay-cover-layer-vertex.glsl';
@@ -52,7 +52,7 @@ export default class DelaunayCoverLayer extends Layer {
       -t[1].long, t[1].lat, t[1].elv)
     );
 
-    const shaders = assembleShaders(gl, this.getShaders());
+    const shaders = this.getShaders();
 
     const model = new Model(gl, {
       id: 'delaunay',
