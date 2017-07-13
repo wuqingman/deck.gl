@@ -89,22 +89,6 @@ export default class WindLayer extends Layer {
 
     const {boundingBox, dataBounds, dataTextureArray} = this.props;
 
-    // upload texture (data) before rendering
-    // gl.bindTexture(gl.TEXTURE_2D, null);
-    // gl.bindTexture(gl.TEXTURE_2D, textureFrom);
-    // gl.activeTexture(gl.TEXTURE0);
-    // gl.bindTexture(gl.TEXTURE_2D, textureFrom);
-    // gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA32F, width, height,
-    //   0, gl.RGBA, gl.FLOAT,
-    //   dataTextureArray[timeInterval | 0], 0);
-
-    // textureFrom.subImage({
-    //   pixels: dataTextureArray[timeInterval | 0],
-    //   width,
-    //   height,
-    //   format: gl.RGBA32F
-    // })
-
     textureFrom.bind(0);
     textureFrom.setImageData({
       pixels: dataTextureArray[timeInterval | 0],
@@ -115,10 +99,6 @@ export default class WindLayer extends Layer {
       dataFormat: gl.RGBA
     });
 
-    // gl.bindTexture(gl.TEXTURE_2D, null);
-    // gl.bindTexture(gl.TEXTURE_2D, textureTo);
-    // gl.activeTexture(gl.TEXTURE1);
-    // gl.bindTexture(gl.TEXTURE_2D, textureTo);
     textureTo.bind(1);
     textureTo.setImageData({
       pixels: dataTextureArray[timeInterval | 0 + 1],
@@ -130,10 +110,6 @@ export default class WindLayer extends Layer {
     });
 
     if (data && data.img) {
-      // gl.bindTexture(gl.TEXTURE_2D, null);
-      // gl.bindTexture(gl.TEXTURE_2D, elevationTexture);
-      // gl.activeTexture(gl.TEXTURE2);
-      // gl.bindTexture(gl.TEXTURE_2D, elevationTexture);
       elevationTexture.bind(2);
       elevationTexture.setImageData({
         pixels: data.img,
@@ -145,11 +121,13 @@ export default class WindLayer extends Layer {
       });
     }
 
-    gl.clearDepth(1.0);
-    gl.enable(gl.DEPTH_TEST);
-    gl.depthFunc(gl.LEQUAL);
+    const parameters = {
+      clearDepth: 1.0,
+      depth: true,
+      depthFunc: gl.LEQUAL
+    };
 
-    model.render(Object.assign({}, uniforms, LIGHT_UNIFORMS, {
+    uniforms = Object.assign({}, uniforms, LIGHT_UNIFORMS, {
       boundingBox: [boundingBox.minLng, boundingBox.maxLng, boundingBox.minLat, boundingBox.maxLat],
       size: [width, height],
       delta,
@@ -161,7 +139,9 @@ export default class WindLayer extends Layer {
       elevationTexture,
       elevationBounds: ELEVATION_DATA_BOUNDS,
       elevationRange: ELEVATION_RANGE
-    }));
+    });
+
+    model.draw({uniforms, parameters});
 
     // onAfterRender
     gl.bindTexture(gl.TEXTURE_2D, null);

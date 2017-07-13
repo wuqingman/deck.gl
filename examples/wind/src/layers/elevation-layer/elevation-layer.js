@@ -80,13 +80,6 @@ export default class ElevationLayer extends Layer {
 
   draw({uniforms}) {
     const {gl} = this.context;
-    gl.enable(gl.DEPTH_TEST);
-    gl.depthFunc(gl.LEQUAL);
-
-    gl.enable(gl.BLEND);
-    gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
-    gl.blendEquation(gl.FUNC_ADD);
-
     const {zScale} = this.props;
     const {data, model} = this.state;
 
@@ -94,21 +87,20 @@ export default class ElevationLayer extends Layer {
       return;
     }
 
-    model.render(
-      Object.assign({}, uniforms, {
-        elevationTexture: data,
-        zScale
-      })
-      /* FIXME - Use the coming settings feature in luma.gl
-      settings: {
-        depthFunc: GL.LEQUAL,
-        blendFunc: [GL.SRC_ALPHA, GL.ONE_MINUS_SRC_ALPHA)],
-        blendEquation: GL.FUNC_ADD
-      }
-      */
-    );
+    const parameters = {
+      depthTest: true,
+      depthFunc: gl.LEQUAL,
+      blend: true,
+      blendFunc: [gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA],
+      blendEquation: gl.FUNC_ADD
+    };
 
-    gl.disable(gl.DEPTH_TEST);
+    uniforms = Object.assign({}, uniforms, {
+      elevationTexture: data,
+      zScale
+    });
+
+    model.draw({uniforms, parameters});
   }
 
   getModel(gl) {
