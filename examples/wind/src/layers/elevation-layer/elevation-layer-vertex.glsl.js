@@ -8,7 +8,7 @@ uniform float zScale;
 
 attribute vec3 positions;
 
-varying vec4 vPosition;
+varying float lightWeight;
 varying vec3 vNormal;
 varying float vAltitude;
 
@@ -37,7 +37,8 @@ void main() {
   vec4 position_worldspace = vec4(curr, 1.0);
   gl_Position = project_to_clipspace(position_worldspace);
 
-  vPosition = position_worldspace;
   vNormal = cross(prev - curr, next - curr);
+
+  lightWeight = getLightWeight(curr, normalize(vNormal));
 }
 `;
