@@ -1,4 +1,4 @@
-import {Layer, assembleShaders} from 'deck.gl';
+import {Layer} from 'deck.gl';
 import {GL, Model, loadTextures} from 'luma.gl';
 
 import {ELEVATION_DATA_IMAGE, ELEVATION_DATA_BOUNDS, ELEVATION_RANGE} from '../../defaults';
@@ -114,18 +114,20 @@ export default class ElevationLayer extends Layer {
   getModel(gl) {
     const shaders = this.getShaders();
     // 3d surface
-    const vsShader = assembleShaders(gl, {
-      vs: shaders.vs,
-      fs: '',
-      modules: ['project', 'lighting']
-    }).vs;
-
-    // FIXME - assembleShaders doesn't support fragment shaders
-    const fsSource = assembleShaders(gl, {
-      vs: shaders.fs,
-      fs: '',
-      modules: ['project', 'lighting']
-    }).vs;
+    const vsShader = shaders.vs;
+    const fsSource = shaders.fs;
+//     const vsShader = assembleShaders(gl, {
+//       vs: shaders.vs,
+//       fs: ''
+// //      modules: ['project', 'lighting']
+//     }).vs;
+//
+//     // FIXME - assembleShaders doesn't support fragment shaders
+//     const fsSource = assembleShaders(gl, {
+//       vs: shaders.fs,
+//       fs: ''
+// //      modules: ['project', 'lighting']
+//     }).vs;
 
     const fsShader = `\
 #ifdef GL_ES
@@ -147,7 +149,8 @@ ${fsSource}`;
       fs: fsShader,
       geometry,
       // FIXME - isIndexed should be set in "GridGeometry"
-      isIndexed: true
+      isIndexed: true,
+      modules: ['lighting']
     });
   }
 }

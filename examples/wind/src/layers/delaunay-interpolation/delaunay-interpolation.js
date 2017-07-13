@@ -1,7 +1,7 @@
 /* global document */
-import {assembleShaders} from 'deck.gl';
+// import {assembleShaders} from 'deck.gl';
 import {
-  Model, Geometry, Program, createGLContext,
+  Model, Geometry, createGLContext,
   Texture2D, Renderbuffer, Framebuffer} from 'luma.gl';
 
 import vertex from './delaunay-interpolation-vertex.glsl';
@@ -54,11 +54,14 @@ export default class DelaunayInterpolation {
       -triangle[2].long, triangle[2].lat, triangle[2].elv
     ));
 
-    const shaders = assembleShaders(gl, this.getDelaunayShaders());
+    // const shaders = assembleShaders(gl, this.getDelaunayShaders());
+    const shaders = this.getDelaunayShaders();
 
     return new Model(gl, {
       id: 'delaunay',
-      program: new Program(gl, shaders),
+      // program: new Program(gl, shaders),
+      vs: shaders.vs,
+      fs: shaders.fs,
       geometry: new Geometry({
         drawMode: 'TRIANGLES',
         positions: new Float32Array(positions)
