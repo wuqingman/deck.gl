@@ -1,10 +1,11 @@
 import {Layer} from 'deck.gl';
-import {Model, Geometry, Program} from 'luma.gl';
-
-import vertex from './delaunay-cover-layer-vertex.glsl';
-import fragment from './delaunay-cover-layer-fragment.glsl';
+// import {Model, Geometry, Program} from 'luma.gl';
+//
+// import vertex from './delaunay-cover-layer-vertex.glsl';
+// import fragment from './delaunay-cover-layer-fragment.glsl';
 
 export default class DelaunayCoverLayer extends Layer {
+/*
   getShaders() {
     return {
       vs: vertex,
@@ -97,4 +98,5 @@ export default class DelaunayCoverLayer extends Layer {
 
     return model;
   }
+*/
 }

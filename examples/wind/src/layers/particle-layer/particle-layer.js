@@ -1,6 +1,6 @@
 /* global Image */
 import {Layer} from 'deck.gl';
-import {GL, Model, Geometry, Buffer, TransformFeedback} from 'luma.gl';
+import {GL, Model, Geometry, Buffer, TransformFeedback, setParameters} from 'luma.gl';
 import ProgramTransformFeedback from './program-transform-feedback';
 
 import DelaunayInterpolation from '../delaunay-interpolation/delaunay-interpolation';
@@ -37,16 +37,6 @@ export default class ParticleLayer extends Layer {
       data.img = image;
     };
     image.src = ELEVATION_DATA_IMAGE;
-
-    // loadTextures(gl, {
-    //   urls: [ELEVATION_DATA_IMAGE],
-    //   parameters: {
-    //     magFilter: GL.LINEAR
-    //   }
-    // })
-    // .then(([texture]) => {
-    //   data.texture = texture;
-    // });
 
     const elevationWidth = 584;
     const elevationHeight = 253;
@@ -116,24 +106,14 @@ export default class ParticleLayer extends Layer {
     this.runTransformFeedback({gl});
 
     const {model, textureFrom, textureTo, delta} = this.state;
-    // model.setUniforms({
-    //   boundingBox: [boundingBox.minLng,
-    //     boundingBox.maxLng,
-    //     boundingBox.minLat,
-    //     boundingBox.maxLat],
-    //   bounds0: [dataBounds[0].min, dataBounds[0].max],
-    //   bounds1: [dataBounds[1].min, dataBounds[1].max],
-    //   bounds2: [dataBounds[2].min, dataBounds[2].max],
-    //   color0: [83, 185, 148].map(d => d / 255),
-    //   color1: [255, 255, 174].map(d => d / 255),
-    //   color2: [241, 85, 46].map(d => d / 255),
-    //   dataFrom: textureFrom,
-    //   dataTo: textureTo,
-    //   elevationTexture: 2,
-    //   elevationBounds: ELEVATION_DATA_BOUNDS,
-    //   elevationRange: ELEVATION_RANGE,
-    //   zScale: props.zScale
-    // });
+    const {textureArray} = texData;
+    const {
+      width, height,
+      elevationTexture, elevationWidth, elevationHeight,
+      bufferTo, bufferFrom,
+      timeInterval
+    } = this.state;
+
     const currentUniforms = {
       boundingBox: [boundingBox.minLng, boundingBox.maxLng, boundingBox.minLat, boundingBox.maxLat],
       bounds0: [dataBounds[0].min, dataBounds[0].max],
@@ -144,33 +124,18 @@ export default class ParticleLayer extends Layer {
       color2: [241, 85, 46].map(d => d / 255),
       dataFrom: textureFrom,
       dataTo: textureTo,
-      elevationTexture: 2,
+      elevationTexture,
       elevationBounds: ELEVATION_DATA_BOUNDS,
       elevationRange: ELEVATION_RANGE,
       zScale: props.zScale,
       delta // TODO: looks to be 0 always , verify.
     };
 
-    gl.enable(gl.BLEND);
-    gl.blendFunc(gl.SRC_ALPHA, gl.ONE);
-    // gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
-    // gl.blendEquation(gl.MAX);
+    setParameters(gl, {
+      blend: true,
+      blendFunc: [gl.SRC_ALPHA, gl.ONE]
+    });
 
-    const {textureArray} = texData;
-    const {
-      width, height,
-      elevationTexture, elevationWidth, elevationHeight,
-      bufferTo, bufferFrom,
-      timeInterval
-    } = this.state;
-
-    // upload texture (data) before rendering
-    // gl.bindTexture(gl.TEXTURE_2D, textureFrom);
-    // gl.activeTexture(gl.TEXTURE0);
-    // gl.bindTexture(gl.TEXTURE_2D, textureFrom);
-    // gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA32F, width, height, 0, gl.RGBA, gl.FLOAT,
-    //   textureArray[timeInterval], 0);
-    // gl.bindTexture(gl.TEXTURE_2D, null);
     textureFrom.bind(0);
     textureFrom.setImageData({
       pixels: textureArray[timeInterval],
@@ -181,12 +146,6 @@ export default class ParticleLayer extends Layer {
       dataFormat: gl.RGBA
     });
 
-    // gl.bindTexture(gl.TEXTURE_2D, textureTo);
-    // gl.activeTexture(gl.TEXTURE1);
-    // gl.bindTexture(gl.TEXTURE_2D, textureTo);
-    // gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA32F, width, height, 0, gl.RGBA, gl.FLOAT,
-    //   textureArray[timeInterval + 1], 0);
-    // gl.bindTexture(gl.TEXTURE_2D, null);
     textureTo.bind(1);
     textureTo.setImageData({
       pixels: textureArray[timeInterval + 1],
@@ -198,11 +157,6 @@ export default class ParticleLayer extends Layer {
     });
 
     if (state.data && state.data.img) {
-      // gl.bindTexture(gl.TEXTURE_2D, elevationTexture);
-      // gl.activeTexture(gl.TEXTURE2);
-      // gl.bindTexture(gl.TEXTURE_2D, elevationTexture);
-      // gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, elevationWidth, elevationHeight,
-      //   0, gl.RGBA, gl.UNSIGNED_BYTE, state.data.img);
       elevationTexture.bind(2);
       elevationTexture.setImageData({
         pixels: state.data.img,
@@ -214,19 +168,9 @@ export default class ParticleLayer extends Layer {
       });
     }
 
-    // const loc = model.program._attributeLocations.posFrom;
-    // gl.bindBuffer(gl.ARRAY_BUFFER, bufferFrom);
-    // gl.enableVertexAttribArray(loc);
-    // gl.vertexAttribPointer(loc, 4, gl.FLOAT, 0 /* gl.FALSE */, 0, 0);
-    // gl.vertexAttribDivisor(loc, 0);
-    // this.state.model.program.setBuffers({
-    //   posFrom: bufferFrom
-    // });
     model.setAttributes({
       posFrom: bufferFrom
     });
-
-    // gl.bindBuffer(gl.ARRAY_BUFFER, null);
 
     model.render(Object.assign({}, currentUniforms, uniforms));
 
@@ -240,20 +184,12 @@ export default class ParticleLayer extends Layer {
   setupTransformFeedback({gl, boundingBox, nx, ny}) {
     const positions4 = this.calculatePositions4({boundingBox, nx, ny});
 
-    // const bufferFrom = gl.createBuffer();
-    // gl.bindBuffer(gl.ARRAY_BUFFER, bufferFrom);
-    // gl.bufferData(gl.ARRAY_BUFFER, positions4, gl.DYNAMIC_COPY);
     const bufferFrom = new Buffer(gl, {
       size: 4, data: positions4, usage: gl.DYNAMIC_COPY});
 
-    // const bufferTo = gl.createBuffer();
-    // gl.bindBuffer(gl.ARRAY_BUFFER, bufferTo);
-    // gl.bufferData(gl.ARRAY_BUFFER, 4 * positions4.length, gl.DYNAMIC_COPY);
     const bufferTo = new Buffer(gl, {
       size: 4, bytes: 4 * positions4.length, usage: gl.DYNAMIC_COPY});
 
-    // const transformFeedback = gl.createTransformFeedback();
-    // gl.bindTransformFeedback(gl.TRANSFORM_FEEDBACK, transformFeedback);
     const transformFeedback = new TransformFeedback(gl, {});
 
     this.setState({
@@ -286,36 +222,11 @@ export default class ParticleLayer extends Layer {
       flip = counter;
     }
 
-    // set uniforms
-    // modelTF.setUniforms({
-    //   boundingBox: [
-    //     boundingBox.minLng, boundingBox.maxLng,
-    //     boundingBox.minLat, boundingBox.maxLat
-    //   ],
-    //   originalBoundingBox: [
-    //     originalBoundingBox.minLng, originalBoundingBox.maxLng,
-    //     originalBoundingBox.minLat, originalBoundingBox.maxLat
-    //   ],
-    //   bounds0: [dataBounds[0].min, dataBounds[0].max],
-    //   bounds1: [dataBounds[1].min, dataBounds[1].max],
-    //   bounds2: [dataBounds[2].min, dataBounds[2].max],
-    //   dataFrom: textureFrom,
-    //   dataTo: textureTo,
-    //   time,
-    //   flip
-    // });
-
     if (flip > 0) {
       flip = -1;
       now = Date.now();
     }
 
-    // upload texture (data) before rendering
-    // gl.bindTexture(gl.TEXTURE_2D, textureFrom);
-    // gl.activeTexture(gl.TEXTURE0);
-    // gl.bindTexture(gl.TEXTURE_2D, textureFrom);
-    // gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA32F, width, height, 0, gl.RGBA, gl.FLOAT,
-    //   textureArray[timeInterval], 0);
     textureFrom.bind(0);
     textureFrom.setImageData({
       pixels: textureArray[timeInterval],
@@ -326,11 +237,6 @@ export default class ParticleLayer extends Layer {
       dataFormat: gl.RGBA
     });
 
-    // gl.bindTexture(gl.TEXTURE_2D, textureTo);
-    // gl.activeTexture(gl.TEXTURE1);
-    // gl.bindTexture(gl.TEXTURE_2D, textureTo);
-    // gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA32F, width, height, 0, gl.RGBA, gl.FLOAT,
-    //   textureArray[timeInterval + 1], 0);
     textureTo.bind(1);
     textureTo.setImageData({
       pixels: textureArray[timeInterval + 1],
@@ -341,27 +247,13 @@ export default class ParticleLayer extends Layer {
       dataFormat: gl.RGBA
     });
 
-    // setup transform feedback
-    gl.enable(gl.RASTERIZER_DISCARD);
-
     modelTF.program.use();
     const {transformFeedback} = this.state;
-    // gl.bindTransformFeedback(gl.TRANSFORM_FEEDBACK, transformFeedback);
 
-    // const loc = modelTF.program._attributeLocations.posFrom;
-    // gl.bindBuffer(gl.ARRAY_BUFFER, bufferFrom);
-    // gl.enableVertexAttribArray(loc);
-    // gl.vertexAttribPointer(loc, 4, gl.FLOAT, 0 /* gl.FALSE */, 0, 0);
-    // gl.vertexAttribDivisor(loc, 0);
-
-    // modelTF.program.setBuffers({
-    //   posFrom: bufferFrom
-    // });
     modelTF.setAttributes({
       posFrom: bufferFrom
     });
 
-    // gl.bindBufferBase(gl.TRANSFORM_FEEDBACK_BUFFER, 0, bufferTo);
     transformFeedback.bindBuffers(
       {
         0: bufferTo
@@ -370,42 +262,34 @@ export default class ParticleLayer extends Layer {
         clear: true
       });
 
-    // gl.beginTransformFeedback(gl.POINTS);
     transformFeedback.begin(gl.POINTS);
 
-    modelTF.render(
-      /*
-      settings: {
-        [GL.RASTERIZER_DISCARD]: true
-      }
-      */
-      {
-        boundingBox: [
-          boundingBox.minLng, boundingBox.maxLng,
-          boundingBox.minLat, boundingBox.maxLat
-        ],
-        originalBoundingBox: [
-          originalBoundingBox.minLng, originalBoundingBox.maxLng,
-          originalBoundingBox.minLat, originalBoundingBox.maxLat
-        ],
-        bounds0: [dataBounds[0].min, dataBounds[0].max],
-        bounds1: [dataBounds[1].min, dataBounds[1].max],
-        bounds2: [dataBounds[2].min, dataBounds[2].max],
-        dataFrom: textureFrom,
-        dataTo: textureTo,
-        time,
-        flip,
-        delta // TODO: looks to be 0 always , verify.
-      }
-    );
+    const uniforms = {
+      boundingBox: [
+        boundingBox.minLng, boundingBox.maxLng,
+        boundingBox.minLat, boundingBox.maxLat
+      ],
+      originalBoundingBox: [
+        originalBoundingBox.minLng, originalBoundingBox.maxLng,
+        originalBoundingBox.minLat, originalBoundingBox.maxLat
+      ],
+      bounds0: [dataBounds[0].min, dataBounds[0].max],
+      bounds1: [dataBounds[1].min, dataBounds[1].max],
+      bounds2: [dataBounds[2].min, dataBounds[2].max],
+      dataFrom: textureFrom,
+      dataTo: textureTo,
+      time,
+      flip,
+      delta // TODO: looks to be 0 always , verify.
+    };
 
-    // gl.endTransformFeedback();
-    // gl.bindBufferBase(gl.TRANSFORM_FEEDBACK_BUFFER, 0, null);
+    const parameters = {
+      [GL.RASTERIZER_DISCARD]: true
+    };
+
+    modelTF.draw({uniforms, parameters});
+
     transformFeedback.end();
-
-    gl.bindTexture(gl.TEXTURE_2D, null);
-    gl.bindBuffer(gl.ARRAY_BUFFER, null);
-    gl.disable(gl.RASTERIZER_DISCARD);
 
     this.setState({
       counter
@@ -424,8 +308,7 @@ export default class ParticleLayer extends Layer {
       }),
       modules: ['project'],
       geometry: new Geometry({
-        id: 'ParticleLayer-modelTFGeom', // this.props.id,
-        // FIXME - change to GL.POINTS when luma assert is fixed
+        id: this.props.id,
         drawMode: GL.POINTS,
         isInstanced: false,
         attributes: {
@@ -449,10 +332,10 @@ export default class ParticleLayer extends Layer {
       id: 'ParticleLayer-model',
       vs: vertex,
       fs: fragment,
+      // TODO: With latest deck.gl project module should be default, verify and remove.
       modules: ['project'],
       geometry: new Geometry({
-        id: 'ParticleLayer-modelGeom', // this.props.id,
-        // FIXME - Update to GL.POINTS once assert in luma has been fixed
+        id: this.props.id,
         drawMode: GL.POINTS,
         attributes: {
           positions: {size: 3, type: GL.FLOAT, value: positions3},
