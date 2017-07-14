@@ -1,6 +1,6 @@
 /* global Image */
 import {Layer} from 'deck.gl';
-import {GL, Model, Geometry} from 'luma.gl';
+import {GL, Model, Geometry, Buffer, TransformFeedback} from 'luma.gl';
 import ProgramTransformFeedback from './program-transform-feedback';
 
 import DelaunayInterpolation from '../delaunay-interpolation/delaunay-interpolation';
@@ -115,7 +115,7 @@ export default class ParticleLayer extends Layer {
 
     this.runTransformFeedback({gl});
 
-    const {model, textureFrom, textureTo} = this.state;
+    const {model, textureFrom, textureTo, delta} = this.state;
     // model.setUniforms({
     //   boundingBox: [boundingBox.minLng,
     //     boundingBox.maxLng,
@@ -147,7 +147,8 @@ export default class ParticleLayer extends Layer {
       elevationTexture: 2,
       elevationBounds: ELEVATION_DATA_BOUNDS,
       elevationRange: ELEVATION_RANGE,
-      zScale: props.zScale
+      zScale: props.zScale,
+      delta // TODO: looks to be 0 always , verify.
     };
 
     gl.enable(gl.BLEND);
@@ -213,14 +214,21 @@ export default class ParticleLayer extends Layer {
       });
     }
 
-    const loc = model.program._attributeLocations.posFrom;
-    gl.bindBuffer(gl.ARRAY_BUFFER, bufferFrom);
-    gl.enableVertexAttribArray(loc);
-    gl.vertexAttribPointer(loc, 4, gl.FLOAT, 0 /* gl.FALSE */, 0, 0);
-    gl.vertexAttribDivisor(loc, 0);
+    // const loc = model.program._attributeLocations.posFrom;
+    // gl.bindBuffer(gl.ARRAY_BUFFER, bufferFrom);
+    // gl.enableVertexAttribArray(loc);
+    // gl.vertexAttribPointer(loc, 4, gl.FLOAT, 0 /* gl.FALSE */, 0, 0);
+    // gl.vertexAttribDivisor(loc, 0);
+    // this.state.model.program.setBuffers({
+    //   posFrom: bufferFrom
+    // });
+    model.setAttributes({
+      posFrom: bufferFrom
+    });
+
     // gl.bindBuffer(gl.ARRAY_BUFFER, null);
 
-    this.state.model.render(Object.assign({}, currentUniforms, uniforms));
+    model.render(Object.assign({}, currentUniforms, uniforms));
 
     // Swap the buffers
     this.setState({
@@ -232,16 +240,21 @@ export default class ParticleLayer extends Layer {
   setupTransformFeedback({gl, boundingBox, nx, ny}) {
     const positions4 = this.calculatePositions4({boundingBox, nx, ny});
 
-    const bufferFrom = gl.createBuffer();
-    gl.bindBuffer(gl.ARRAY_BUFFER, bufferFrom);
-    gl.bufferData(gl.ARRAY_BUFFER, positions4, gl.DYNAMIC_COPY);
+    // const bufferFrom = gl.createBuffer();
+    // gl.bindBuffer(gl.ARRAY_BUFFER, bufferFrom);
+    // gl.bufferData(gl.ARRAY_BUFFER, positions4, gl.DYNAMIC_COPY);
+    const bufferFrom = new Buffer(gl, {
+      size: 4, data: positions4, usage: gl.DYNAMIC_COPY});
 
-    const bufferTo = gl.createBuffer();
-    gl.bindBuffer(gl.ARRAY_BUFFER, bufferTo);
-    gl.bufferData(gl.ARRAY_BUFFER, 4 * positions4.length, gl.DYNAMIC_COPY);
+    // const bufferTo = gl.createBuffer();
+    // gl.bindBuffer(gl.ARRAY_BUFFER, bufferTo);
+    // gl.bufferData(gl.ARRAY_BUFFER, 4 * positions4.length, gl.DYNAMIC_COPY);
+    const bufferTo = new Buffer(gl, {
+      size: 4, bytes: 4 * positions4.length, usage: gl.DYNAMIC_COPY});
 
-    const transformFeedback = gl.createTransformFeedback();
-    gl.bindTransformFeedback(gl.TRANSFORM_FEEDBACK, transformFeedback);
+    // const transformFeedback = gl.createTransformFeedback();
+    // gl.bindTransformFeedback(gl.TRANSFORM_FEEDBACK, transformFeedback);
+    const transformFeedback = new TransformFeedback(gl, {});
 
     this.setState({
       counter: 0,
@@ -253,7 +266,7 @@ export default class ParticleLayer extends Layer {
 
   runTransformFeedback({gl}) {
     // Run transform feedback
-    const {modelTF, textureFrom, textureTo} = this.state;
+    const {modelTF, textureFrom, textureTo, delta} = this.state;
 
     const {boundingBox, originalBoundingBox} = this.props;
     const {dataBounds, textureArray, textureSize} = this.props.texData;
@@ -333,15 +346,32 @@ export default class ParticleLayer extends Layer {
 
     modelTF.program.use();
     const {transformFeedback} = this.state;
-    gl.bindTransformFeedback(gl.TRANSFORM_FEEDBACK, transformFeedback);
+    // gl.bindTransformFeedback(gl.TRANSFORM_FEEDBACK, transformFeedback);
 
-    const loc = modelTF.program._attributeLocations.posFrom;
-    gl.bindBuffer(gl.ARRAY_BUFFER, bufferFrom);
-    gl.enableVertexAttribArray(loc);
-    gl.vertexAttribPointer(loc, 4, gl.FLOAT, 0 /* gl.FALSE */, 0, 0);
-    gl.vertexAttribDivisor(loc, 0);
-    gl.bindBufferBase(gl.TRANSFORM_FEEDBACK_BUFFER, 0, bufferTo);
-    gl.beginTransformFeedback(gl.POINTS);
+    // const loc = modelTF.program._attributeLocations.posFrom;
+    // gl.bindBuffer(gl.ARRAY_BUFFER, bufferFrom);
+    // gl.enableVertexAttribArray(loc);
+    // gl.vertexAttribPointer(loc, 4, gl.FLOAT, 0 /* gl.FALSE */, 0, 0);
+    // gl.vertexAttribDivisor(loc, 0);
+
+    // modelTF.program.setBuffers({
+    //   posFrom: bufferFrom
+    // });
+    modelTF.setAttributes({
+      posFrom: bufferFrom
+    });
+
+    // gl.bindBufferBase(gl.TRANSFORM_FEEDBACK_BUFFER, 0, bufferTo);
+    transformFeedback.bindBuffers(
+      {
+        0: bufferTo
+      },
+      {
+        clear: true
+      });
+
+    // gl.beginTransformFeedback(gl.POINTS);
+    transformFeedback.begin(gl.POINTS);
 
     modelTF.render(
       /*
@@ -364,14 +394,17 @@ export default class ParticleLayer extends Layer {
         dataFrom: textureFrom,
         dataTo: textureTo,
         time,
-        flip
+        flip,
+        delta // TODO: looks to be 0 always , verify.
       }
     );
 
-    gl.endTransformFeedback();
+    // gl.endTransformFeedback();
+    // gl.bindBufferBase(gl.TRANSFORM_FEEDBACK_BUFFER, 0, null);
+    transformFeedback.end();
+
     gl.bindTexture(gl.TEXTURE_2D, null);
     gl.bindBuffer(gl.ARRAY_BUFFER, null);
-    gl.bindBufferBase(gl.TRANSFORM_FEEDBACK_BUFFER, 0, null);
     gl.disable(gl.RASTERIZER_DISCARD);
 
     this.setState({
@@ -384,13 +417,14 @@ export default class ParticleLayer extends Layer {
     const positions3 = this.calculatePositions3({nx, ny});
 
     const modelTF = new Model(gl, {
+      id: 'ParticleLayer-modelTF',
       program: new ProgramTransformFeedback(gl, {
         vs: vertexTF,
         fs: fragmentTF
       }),
       modules: ['project'],
       geometry: new Geometry({
-        id: this.props.id,
+        id: 'ParticleLayer-modelTFGeom', // this.props.id,
         // FIXME - change to GL.POINTS when luma assert is fixed
         drawMode: GL.POINTS,
         isInstanced: false,
@@ -412,13 +446,14 @@ export default class ParticleLayer extends Layer {
     const positions3 = this.calculatePositions3({nx, ny});
 
     return new Model(gl, {
+      id: 'ParticleLayer-model',
       vs: vertex,
       fs: fragment,
       modules: ['project'],
       geometry: new Geometry({
-        id: this.props.id,
+        id: 'ParticleLayer-modelGeom', // this.props.id,
         // FIXME - Update to GL.POINTS once assert in luma has been fixed
-        drawMode: 'POINTS',
+        drawMode: GL.POINTS,
         attributes: {
           positions: {size: 3, type: GL.FLOAT, value: positions3},
           vertices: {size: 3, type: GL.FLOAT, value: positions3}

@@ -38,9 +38,9 @@ uniform vec4 elevationBounds;
 uniform vec2 elevationRange;
 uniform float zScale;
 
-attribute vec3 positions;
+// attribute vec3 positions;
 attribute vec4 posFrom;
-attribute vec3 vertices;
+// attribute vec3 vertices;
 
 varying vec4 vColor;
 varying float vAltitude;
