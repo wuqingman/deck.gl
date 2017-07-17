@@ -5,6 +5,7 @@ import {Layer} from 'deck.gl';
 // import fragment from './delaunay-cover-layer-fragment.glsl';
 
 export default class DelaunayCoverLayer extends Layer {
+// NOTE: commenting out, it is not used anywhere.
 /*
   getShaders() {
     return {

@@ -93,7 +93,6 @@ export default class DelaunayInterpolation {
       }
     }, options);
 
-    const pixelStore = opt.pixelStore;
     const data = opt.data;
     const type = data.type;
     const format = data.format;
@@ -116,11 +115,6 @@ export default class DelaunayInterpolation {
       },
       pixelStore: {[gl.UNPACK_FLIP_Y_WEBGL]: true}
     });
-
-    // set texture properties
-    // TODO: right now this does a global setting, apply this using withParameters
-    // for required texImage2D, textSubImage2D and readPixels.
-    pixelStore.forEach(option => gl.pixelStorei(option.name, option.value));
 
     return texture;
   }
@@ -154,8 +148,6 @@ export default class DelaunayInterpolation {
         attachment: gl.DEPTH_ATTACHMENT
       }
     }, options.fb);
-
-    // gl.bindFramebuffer(gl.FRAMEBUFFER, null);
 
     const texture = this.createTextureNew(gl, options.txt);
     const rb = this.createRenderbuffer(gl, options.rb);
@@ -290,7 +282,12 @@ export default class DelaunayInterpolation {
 
         // read texture back
         const pixels = new Float32Array(width * height * 4);
-        gl.readPixels(0, 0, width, height, gl.RGBA, gl.FLOAT, pixels, 0);
+        const pixelStoreParameters = {
+          [gl.UNPACK_FLIP_Y_WEBGL]: true
+        };
+        withParameters(gl, pixelStoreParameters, () => {
+          gl.readPixels(0, 0, width, height, gl.RGBA, gl.FLOAT, pixels, 0);
+        });
 
         return pixels;
       });

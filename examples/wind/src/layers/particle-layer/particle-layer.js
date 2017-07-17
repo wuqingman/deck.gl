@@ -135,36 +135,39 @@ export default class ParticleLayer extends Layer {
       blend: true,
       blendFunc: [gl.SRC_ALPHA, gl.ONE]
     });
+    const pixelStoreParameters = {
+      [GL.UNPACK_FLIP_Y_WEBGL]: true
+    };
 
-    textureFrom.bind(0);
     textureFrom.setImageData({
       pixels: textureArray[timeInterval],
       width,
       height,
       format: gl.RGBA32F,
       type: gl.FLOAT,
-      dataFormat: gl.RGBA
+      dataFormat: gl.RGBA,
+      parameters: pixelStoreParameters
     });
 
-    textureTo.bind(1);
     textureTo.setImageData({
       pixels: textureArray[timeInterval + 1],
       width,
       height,
       format: gl.RGBA32F,
       type: gl.FLOAT,
-      dataFormat: gl.RGBA
+      dataFormat: gl.RGBA,
+      parameters: pixelStoreParameters
     });
 
     if (state.data && state.data.img) {
-      elevationTexture.bind(2);
       elevationTexture.setImageData({
         pixels: state.data.img,
         width: elevationWidth,
         height: elevationHeight,
         format: gl.RGBA,
         type: gl.UNSIGNED_BYTE,
-        dataFormat: gl.RGBA
+        dataFormat: gl.RGBA,
+        parameters: pixelStoreParameters
       });
     }
 
@@ -227,24 +230,28 @@ export default class ParticleLayer extends Layer {
       now = Date.now();
     }
 
-    textureFrom.bind(0);
+    const pixelStoreParameters = {
+      [GL.UNPACK_FLIP_Y_WEBGL]: true
+    };
+
     textureFrom.setImageData({
       pixels: textureArray[timeInterval],
       width,
       height,
       format: gl.RGBA32F,
       type: gl.FLOAT,
-      dataFormat: gl.RGBA
+      dataFormat: gl.RGBA,
+      parameters: pixelStoreParameters
     });
 
-    textureTo.bind(1);
     textureTo.setImageData({
       pixels: textureArray[timeInterval + 1],
       width,
       height,
       format: gl.RGBA32F,
       type: gl.FLOAT,
-      dataFormat: gl.RGBA
+      dataFormat: gl.RGBA,
+      parameters: pixelStoreParameters
     });
 
     modelTF.program.use();
@@ -306,7 +313,6 @@ export default class ParticleLayer extends Layer {
         vs: vertexTF,
         fs: fragmentTF
       }),
-      modules: ['project'],
       geometry: new Geometry({
         id: this.props.id,
         drawMode: GL.POINTS,
@@ -332,8 +338,6 @@ export default class ParticleLayer extends Layer {
       id: 'ParticleLayer-model',
       vs: vertex,
       fs: fragment,
-      // TODO: With latest deck.gl project module should be default, verify and remove.
-      modules: ['project'],
       geometry: new Geometry({
         id: this.props.id,
         drawMode: GL.POINTS,

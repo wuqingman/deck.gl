@@ -88,36 +88,39 @@ export default class WindLayer extends Layer {
     } = this.state;
 
     const {boundingBox, dataBounds, dataTextureArray} = this.props;
+    const pixelStoreParameters = {
+      [GL.UNPACK_FLIP_Y_WEBGL]: true
+    };
 
-    textureFrom.bind(0);
     textureFrom.setImageData({
       pixels: dataTextureArray[timeInterval | 0],
       width,
       height,
       format: gl.RGBA32F,
       type: gl.FLOAT,
-      dataFormat: gl.RGBA
+      dataFormat: gl.RGBA,
+      parameters: pixelStoreParameters
     });
 
-    textureTo.bind(1);
     textureTo.setImageData({
       pixels: dataTextureArray[timeInterval | 0 + 1],
       width,
       height,
       format: gl.RGBA32F,
       type: gl.FLOAT,
-      dataFormat: gl.RGBA
+      dataFormat: gl.RGBA,
+      parameters: pixelStoreParameters
     });
 
     if (data && data.img) {
-      elevationTexture.bind(2);
       elevationTexture.setImageData({
         pixels: data.img,
         width: elevationWidth,
         height: elevationHeight,
         format: gl.RGBA,
         type: gl.UNSIGNED_BYTE,
-        dataFormat: gl.RGBA
+        dataFormat: gl.RGBA,
+        parameters: pixelStoreParameters
       });
     }
 
