@@ -2,9 +2,22 @@
 /* eslint-disable no-console */
 import React, {PureComponent} from 'react';
 import {render} from 'react-dom';
-import DeckGL, {LineLayer, OrthographicViewport, COORDINATE_SYSTEM} from 'deck.gl';
+import DeckGL, {OrthographicViewport, COORDINATE_SYSTEM} from 'deck.gl';
 
-import {Quad, Rectangle, Arrow, StyledLineLayer} from './layers';
+import {Quad, Rectangle, Arrow, getMarkerId, getMarkerById, StyledLineLayer} from './layers';
+
+const LINES = [
+  {source: [-1000, -30], target: [1000, -30]},
+  {source: [-1000, -10], target: [1000, -10], marker: Rectangle},
+  {source: [-1000, 10], target: [1000, 10], marker: Quad},
+  {source: [-1000, 30], target: [1000, 30], marker: Arrow}
+];
+
+const MARKER_PADDING_MAP = {
+  [Rectangle.id]: 32,
+  [Quad.id]: 10,
+  [Arrow.id]: 4
+};
 
 class Example extends PureComponent {
   constructor(props) {
@@ -12,19 +25,7 @@ class Example extends PureComponent {
 
     this._onResize = this._onResize.bind(this);
     this.state = {
-      lines: [
-        {id: 0, source: [-300, -100], target: [300, -100], marker: Rectangle},
-        {id: 1, source: [-300, -80], target: [300, -80], marker: Quad},
-        {id: 2, source: [-300, -60], target: [300, -60], marker: Arrow},
-        {id: 3, source: [-300, -40], target: [300, -40], marker: Rectangle},
-        {id: 4, source: [-300, -20], target: [300, -20], marker: Rectangle},
-        {id: 5, source: [-300, 0], target: [300, 0], marker: Rectangle},
-        {id: 6, source: [-300, 20], target: [300, 20], marker: Rectangle},
-        {id: 7, source: [-300, 40], target: [300, 40], marker: Rectangle},
-        {id: 8, source: [-300, 60], target: [300, 60], marker: Rectangle},
-        {id: 9, source: [-300, 80], target: [300, 80], marker: Rectangle},
-        {id: 10, source: [-300, 100], target: [300, 100], marker: Rectangle}
-      ]
+      groupedLines: this._groupLinesByMarker(LINES)
     };
   }
 
@@ -42,31 +43,36 @@ class Example extends PureComponent {
     this.setState({width, height});
   }
 
-  _renderStyledLines() {
-    const {lines} = this.state;
+  _groupLinesByMarker(lines) {
+    return lines.reduce((result, line) => {
+      const markerId = getMarkerId(line.marker);
+      if (result[markerId]) {
+        result[markerId].push(line);
+      } else {
+        result[markerId] = [line];
+      }
+      return result;
+    }, {});
+  }
 
-    return [
-      new StyledLineLayer({
-        id: 'styled-line-layer',
-        data: lines,
-        getFeatureId: line => line.id,
-        getSourcePosition: line => line.source,
-        getTargetPosition: line => line.target,
-        getColor: line => [64, 64, 64, 255],
-        getMarker: line => line.marker,
-        strokeWidth: 4,
+  _renderStyledLines() {
+    const {groupedLines} = this.state;
+
+    return Object.keys(groupedLines).map(markerId => {
+      return new StyledLineLayer({
+        id: `styled-line-${markerId}-layer`,
+        data: groupedLines[markerId],
+        marker: getMarkerById(markerId),
+        markerPadding: MARKER_PADDING_MAP[markerId],
+        maxNumMakers: 200,
+        getFeatureId: f => f.id,
+        getSourcePosition: f => f.source,
+        getTargetPosition: f => f.target,
+        getColor: f => [Math.random() * 255, Math.random() * 255, Math.random() * 255, 255],
+        strokeWidth: 12,
         projectionMode: COORDINATE_SYSTEM.IDENTITY
-      }),
-      new LineLayer({
-        id: 'line-layer',
-        data: lines,
-        getSourcePosition: line => line.source,
-        getTargetPosition: line => line.target,
-        getColor: e => [64, 64, 64, 255],
-        strokeWidth: 1,
-        projectionMode: COORDINATE_SYSTEM.IDENTITY
-      })
-    ];
+      });
+    });
   }
 
   render() {
