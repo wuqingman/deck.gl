@@ -7,8 +7,6 @@ tags:
   - Framework Suite
 ---
 
-# The Birth of a Visualization Framework Suite
-
 ## A Simple Idea
 
 The basic idea behind today's by taking Uber's most popular open source Visualization frameworks, and aligning their websites, documentation and examples, and providing links between the websites, we can make our various frameworks significantly easier to discover and use for both new and experienced users.

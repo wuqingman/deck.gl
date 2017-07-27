@@ -8,8 +8,6 @@ tags:
   - Luma.gl
 ---
 
-# Introducing luma.gl v4.0
-
 ## Version 4.0
 
 In many ways v4.0 is the biggest luma.gl release to date. It is a major upgrade that brings full WebGL2 support to luma.gl, as well as adding advanced features such as GL state management and a shader module system.
