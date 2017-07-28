@@ -109,7 +109,6 @@ Enjoy!
 ## Contributors
 
 This suite of frameworks was created by the Visualization Team at Uber. It is the result of a collaboration between a number of amazing contributors, including:
-[**Nicolas Garcia Belmonte**](https://github.com/philogb),
 [**Xiaoji Chen**](https://github.com/Pessimistress),
 [**Anh Mai**](https://github.com/abmai),
 [**Ib Green**](https://github.com/ibgreen),
@@ -118,7 +117,11 @@ This suite of frameworks was created by the Visualization Team at Uber. It is th
 [**Balthazar Gronon**](https://github.com/apercu),
 [**Yang Wang**](https://github.com/gnavvy),
 [**Ravi Akkenapally**](https://github.com/1chandu),
-[**Shaojing Li**](https://github.com/shaojingli)
+[**Jerome Cukier**](https://github.com/jckr),
+[**Andrew McNutt**](https://github.com/mcnuttandrew),
+[**Shaojing Li**](https://github.com/shaojingli),
+[**Nicolas Garcia Belmonte**](https://github.com/philogb),
+
 
 
 
