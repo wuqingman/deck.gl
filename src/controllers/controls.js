@@ -173,6 +173,7 @@ export default class Controls {
     if (this.onViewportChange &&
       Object.keys(newViewport).some(key => oldViewport[key] !== newViewport[key])) {
       // Viewport has changed
+      console.log(`Controls: ====== onViewportChange pitch: ${newViewport.pitch}`);
       this.onViewportChange(newViewport);
     }
 

@@ -9,7 +9,7 @@ import CURSOR from '../../../react/controllers/cursors';
 
 import {viewportLinearAnimation} from './viewport-animation-utils.js';
 
-const VIEWPORT_ANIMATE_PROPS = ['longitude', 'latitude', 'zoom', 'bearing', 'pitch'];
+const VIEWPORT_ANIMATE_PROPS = ['pitch', 'longitude', 'latitude', 'zoom', 'bearing'];
 const VIEWPORT_ANIMATE_FREQUENCY = 0.01;
 const VIEWPORT_ANIMATION_DURATION = 0;
 const VIEWPORT_ANIMATION_EASING_FUNC = t => t;
@@ -158,13 +158,16 @@ export default class AnimationMapController extends PureComponent {
 
   _createAnimationInterval() {
     if (this.state.animationInterval) {
+      console.log('### stop old animation');
       clearInterval(this.state.animationInterval);
     }
+    console.log('### start new animation');
     const updateFrequency = this.props.viewportAnimationDuration * VIEWPORT_ANIMATE_FREQUENCY;
     return setInterval(() => this._updateViewport(), updateFrequency);
   }
 
   _animateViewportProp(nextProps) {
+    console.log(`process new props pitch: ${nextProps.pitch}`);
     if (this._isViewportAnimationEnabled()) {
       const startViewport = this._extractViewportFromProps(this.props);
       const endViewport = this._extractViewportFromProps(nextProps);
@@ -182,13 +185,21 @@ export default class AnimationMapController extends PureComponent {
   }
 
   _didViewportAnimatePropChanged(startViewport, endViewport) {
+    console.log(`Controller detect viewportChange for pitch : start: ${startViewport.pitch} end ${endViewport.pitch} animated: ${this.state.animatedViewport ? this.state.animatedViewport.pitch : 'null'}`);
     for (const p of VIEWPORT_ANIMATE_PROPS) {
       if (startViewport[p] !== undefined &&
         endViewport[p] !== undefined &&
+        (this.state.animatedViewport ? endViewport[p] !== this.state.animatedViewport[p] : true) &&
         startViewport[p] !== endViewport[p]) {
+        console.log(` TRUE : Controller detected viewportChange for ${p}: start: ${startViewport[p]} end ${endViewport[p]} animated: ${this.state.animatedViewport ? this.state.animatedViewport[p] : 'null'}`);
+
+        if (this.state.animatedViewport && endViewport[p] !== this.state.animatedViewport[p]) {
+          console.log('Viewport update while in animation ###### ');
+        }
         return true;
       }
     }
+    console.log(' FALSE ');
     return false;
   }
 
@@ -201,16 +212,24 @@ export default class AnimationMapController extends PureComponent {
     );
 
     if (this.state.animationT <= 1.0) {
+      // console.log(`Controller update pitch: ${animatedViewport.pitch} t: ${t}`);
       this.setState(prevState => ({
-        animationT: prevState.animationT + VIEWPORT_ANIMATE_FREQUENCY,
+        animationT: (
+          prevState.animationT + VIEWPORT_ANIMATE_FREQUENCY > 1.0 &&
+          prevState.animationT + VIEWPORT_ANIMATE_FREQUENCY < 1.0 + VIEWPORT_ANIMATE_FREQUENCY
+        ) ? 1.0 : prevState.animationT + VIEWPORT_ANIMATE_FREQUENCY,
         animatedViewport
       }));
+      if (this.props.onViewportChange) {
+        this.props.onViewportChange(animatedViewport);
+      }
     } else {
       this._endAnimation();
     }
   }
 
   _endAnimation() {
+    console.log('### animation ended');
     clearInterval(this.state.animationInterval);
     this.setState({
       animationT: 0,
@@ -235,6 +254,7 @@ export default class AnimationMapController extends PureComponent {
   }
 
   _isViewportAnimationEnabled() {
+    console.log(`_isViewportAnimationEnabled: ${this.props.viewportAnimationDuration !== 0}`);
     return this.props.viewportAnimationDuration !== 0;
   }
 
@@ -249,6 +269,7 @@ export default class AnimationMapController extends PureComponent {
     };
 
     const viewport = this.state.animatedViewport || this._extractViewportFromProps(this.props);
+    console.log(`Controller Render: animatedViewport: ${this.state.animatedViewport} pitch: ${viewport.pitch} animation: ${this._isViewportAnimationEnabled()}`);
     const childrenWithProps = this._isViewportAnimationEnabled() ?
       this._recursiveUpdateChildren(this.props.children, viewport) : this.props.children;
 

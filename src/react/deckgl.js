@@ -139,16 +139,18 @@ export default class DeckGL extends React.Component {
       useDevicePixelRatio
     } = nextProps;
 
-    this.layerManager.setEventHandlingParameters({
-      pickingRadius,
-      onLayerClick,
-      onLayerHover
-    });
+    if (this.layerManager) {
+      this.layerManager.setEventHandlingParameters({
+        pickingRadius,
+        onLayerClick,
+        onLayerHover
+      });
 
-    // If more parameters need to be udpated on layerManager add them to this method.
-    this.layerManager.setParameters({
-      useDevicePixelRatio
-    });
+      // If more parameters need to be udpated on layerManager add them to this method.
+      this.layerManager.setParameters({
+        useDevicePixelRatio
+      });
+    }
 
     // If Viewport is not supplied, create one from mercator props
     let {viewport} = nextProps;

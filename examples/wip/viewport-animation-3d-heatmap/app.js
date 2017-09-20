@@ -24,7 +24,9 @@ class Root extends Component {
         width: 500,
         height: 500
       },
-      data: null
+      data: null,
+      viewportAnimationDuration: 0,
+      viewportToggled: false
     };
 
     requestCsv(DATA_URL, (error, response) => {
@@ -51,8 +53,10 @@ class Root extends Component {
   }
 
   _onViewportChange(viewport) {
+    console.log(`App: onViewportChange: pitch: ${viewport.pitch}`);
     this.setState({
       viewport: {...this.state.viewport, ...viewport}
+//      viewportAnimationDuration: 0
     });
   }
 
@@ -60,20 +64,27 @@ class Root extends Component {
   // Add proper UI to change viewport.
   _toggleViewport() {
     const newViewport = {};
-    newViewport.pitch = (this.state.viewport.pitch === 0) ? 60.0 : 0.0;
-    newViewport.bearing = (this.state.viewport.bearing === 0) ? -90.0 : 0.0;
+    newViewport.pitch = this.state.viewportToggled ? 60.0 : 0.0;
+    newViewport.bearing = this.state.viewportToggled ? -90.0 : 0.0;
+    console.log(`App ----------------- App toggle viewport new pitch: ${newViewport.pitch}`);
     this.setState({
-      viewport: {...this.state.viewport, ...newViewport}
+      viewport: {...this.state.viewport, ...newViewport},
+      viewportAnimationDuration: 2000,
+      viewportToggled: !this.state.viewportToggled
     });
   }
 
+  // -here- _toggleViewport() calls with `viewportAnimationDuration` which
+  // triggers _onViewportChange, which will re-set animationDuration to 0 causing animation to stop.
+
   render() {
-    const {viewport, data} = this.state;
+    const {viewport, data, viewportAnimationDuration} = this.state;
+    console.log(`App Render: viewportAnimationDuration: ${viewportAnimationDuration}`);
     return (
       <AnimationMapController
         {...viewport}
         onViewportChange={this._onViewportChange.bind(this)}
-        viewportAnimationDuration={2000}>
+        viewportAnimationDuration={viewportAnimationDuration}>
         <StaticMap
           {...viewport}
           mapStyle="mapbox://styles/mapbox/dark-v9"
