@@ -55,8 +55,8 @@ class Root extends Component {
   _onViewportChange(viewport) {
     console.log(`App: onViewportChange: pitch: ${viewport.pitch}`);
     this.setState({
-      viewport: {...this.state.viewport, ...viewport}
-//      viewportAnimationDuration: 0
+      viewport: {...this.state.viewport, ...viewport},
+      viewportAnimationDuration: 0
     });
   }
 
