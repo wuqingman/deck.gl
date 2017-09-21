@@ -86,11 +86,13 @@ class Root extends Component {
         onViewportChange={this._onViewportChange.bind(this)}
         viewportAnimationDuration={viewportAnimationDuration}>
         <StaticMap
+          _name_={'StaicMap'}
           {...viewport}
           mapStyle="mapbox://styles/mapbox/dark-v9"
           onViewportChange={this._onViewportChange.bind(this)}
           mapboxApiAccessToken={MAPBOX_TOKEN}>
           <DeckGLOverlay
+             _name_={'DeckGLOverlay'}
             viewport={viewport}
             data={data || []}
           />

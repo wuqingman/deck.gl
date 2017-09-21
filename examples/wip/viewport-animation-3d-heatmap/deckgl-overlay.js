@@ -28,6 +28,38 @@ const defaultProps = {
   coverage: 1
 };
 
+function prettyFloat(x, nbDec) {
+  if (!nbDec) {
+    nbDec = 100;
+  }
+  const a = Math.abs(x);
+  let e = Math.floor(a);
+  let d = Math.round((a - e) * nbDec); if (d === nbDec) {
+    d = 0;
+    e++;
+  }
+  const signStr = (x < 0) ? '-' : ' ';
+  let decStr = d.toString();
+  let tmp = 10;
+  while (tmp < nbDec && d * tmp < nbDec) {
+    decStr = `0${decStr}`;
+    tmp *= 10;
+  }
+  const eStr = e.toString();
+  return `${signStr}${eStr}.${decStr}`;
+}
+
+function logViewport(msg, viewport) {
+  if (!viewport) {
+    msg += 'viewport: null';
+  } else {
+    for (const p in viewport) {
+      msg += ` ${p}: ${prettyFloat(viewport[p])}`;
+    }
+  }
+  console.log(`${msg}`);
+}
+
 export default class DeckGLOverlay extends Component {
 
   static get defaultColorRange() {
@@ -128,7 +160,8 @@ export default class DeckGLOverlay extends Component {
       })
     ];
 
-    return <DeckGL {...viewport} layers={layers} onWebGLInitialized={this._initialize} />;
+    logViewport('=== DeckGLOverlay Render using viewport', viewport);
+    return <DeckGL {...viewport} layers={layers} onWebGLInitialized={this._initialize} _name_={'DeckGL'}/>;
   }
 }
 

@@ -1,3 +1,4 @@
+/* eslint max-len: ["error", 800] */
 /* global setInterval, clearInterval */
 import {PureComponent, createElement, cloneElement, Children, isValidElement} from 'react';
 import PropTypes from 'prop-types';
@@ -14,6 +15,37 @@ const VIEWPORT_ANIMATE_FREQUENCY = 0.01;
 const VIEWPORT_ANIMATION_DURATION = 0;
 const VIEWPORT_ANIMATION_EASING_FUNC = t => t;
 
+function prettyFloat(x, nbDec) {
+  if (!nbDec) {
+    nbDec = 100;
+  }
+  const a = Math.abs(x);
+  let e = Math.floor(a);
+  let d = Math.round((a - e) * nbDec); if (d === nbDec) {
+    d = 0;
+    e++;
+  }
+  const signStr = (x < 0) ? '-' : ' ';
+  let decStr = d.toString();
+  let tmp = 10;
+  while (tmp < nbDec && d * tmp < nbDec) {
+    decStr = `0${decStr}`;
+    tmp *= 10;
+  }
+  const eStr = e.toString();
+  return `${signStr}${eStr}.${decStr}`;
+}
+
+function logViewport(msg, viewport) {
+  if (!viewport) {
+    msg += 'viewport: null';
+  } else {
+    for (const p in viewport) {
+      msg += ` ${p}: ${prettyFloat(viewport[p])}`;
+    }
+  }
+  console.log(`${msg}`);
+}
 const propTypes = {
   /** The width of the map. */
   width: PropTypes.number.isRequired,
@@ -117,7 +149,6 @@ export default class AnimationMapController extends PureComponent {
       animatedViewport: null
     };
     this.someVar = 'init';
-    console.log(`==== constructor this.animationContext.animationT = ${this.animationContext.animationT}`);
 
     this._updateViewport = this._updateViewport.bind(this);
 //*
@@ -155,14 +186,14 @@ export default class AnimationMapController extends PureComponent {
       animationEndState: null,
       animatedViewport: null
     };
-    console.log(`==== componentDidMount this.animationContext.animationT = ${this.animationContext.animationT}`);
+    // console.log(`==== componentDidMount this.animationContext.animationT = ${this.animationContext.animationT}`);
   }
 
   componentWillUpdate(nextProps) {
     this.someVar = 'componentWillUpdate';
     this._controls.setOptions(nextProps);
     this._animateViewportProp(nextProps);
-    console.log(`=== componentWillUpdate t: ${this.animationContext.animationT} interval: ${this.animationContext.animationInterval} `);
+    // console.log(`=== componentWillUpdate t: ${this.animationContext.animationT} interval: ${this.animationContext.animationInterval} `);
   }
 
   componentWillUnmount() {
@@ -186,14 +217,16 @@ export default class AnimationMapController extends PureComponent {
       zoom: props.zoom,
       bearing: props.bearing,
       pitch: props.pitch,
-      altitude: props.altitude
+      minZoom: props.minZoom,
+      maxZoom: props.maxZoom
+//      altitude: props.altitude
     };
   }
 
   _createAnimationInterval(nextProps) {
-    if (this.state.animationInterval) {
+    if (this.animationContext.animationInterval) {
       console.log('### stop old animation');
-      clearInterval(this.state.animationInterval);
+      clearInterval(this.animationContext.animationInterval);
     }
     const updateFrequency = nextProps.viewportAnimationDuration * VIEWPORT_ANIMATE_FREQUENCY;
     console.log(`### start new animation freq: ${updateFrequency} duration: ${this.props.viewportAnimationDuration} freq: ${VIEWPORT_ANIMATE_FREQUENCY}`);
@@ -240,18 +273,17 @@ export default class AnimationMapController extends PureComponent {
           animatedViewport: startViewport
         };
         this.forceUpdate();
-        console.log(`animationContext update complete t: ${this.animationContext.animationT} interval: ${this.animationContext.animationInterval} p: ${this.animationContext.animationStartViewport.pitch} -> ${this.animationContext.animationEndViewport.pitch} `);
+        console.log(`START animation t: ${this.animationContext.animationT} interval: ${this.animationContext.animationInterval} p: ${this.animationContext.animationStartViewport.pitch} -> ${this.animationContext.animationEndViewport.pitch} `);
       }
     }
   }
 
   _didViewportAnimatePropChanged(startViewport, endViewport) {
-    console.log(`Controller detect viewportChange for pitch : start: ${startViewport.pitch} end ${endViewport.pitch} animated: ${this.state.animatedViewport ? this.state.animatedViewport.pitch : 'null'}`);
     for (const p of VIEWPORT_ANIMATE_PROPS) {
       if (startViewport[p] !== undefined &&
         endViewport[p] !== undefined &&
         startViewport[p] !== endViewport[p]) {
-        console.log(` TRUE : Controller detected viewportChange for ${p}: start: ${startViewport[p]} end ${endViewport[p]} animated: ${this.state.animatedViewport ? this.state.animatedViewport[p] : 'null'}`);
+        console.log(` TRUE : Controller detected viewportChange for ${p}: start: ${startViewport[p]} end ${endViewport[p]} animated: ${this.animationContext.animatedViewport ? this.animationContext.animatedViewport[p] : 'null'}`);
         return true;
       }
     }
@@ -272,13 +304,16 @@ export default class AnimationMapController extends PureComponent {
       t
     );
     const currentTime = this.animationContext.animationT;
-    if (currentTime <= 1.0) {
+    if (currentTime < 1.0) {
       // console.log(`Controller update pitch: ${animatedViewport.pitch} t: ${t}`);
       this.animationContext.animationT = (
         currentTime + VIEWPORT_ANIMATE_FREQUENCY > 1.0 &&
         currentTime + VIEWPORT_ANIMATE_FREQUENCY < 1.0 + VIEWPORT_ANIMATE_FREQUENCY
         ) ? 1.0 : currentTime + VIEWPORT_ANIMATE_FREQUENCY;
-      this.animationContext.animatedViewport = animatedViewport;
+      this.animationContext.animatedViewport = Object.assign(
+        {},
+        this.animationContext.animationEndViewport,
+        animatedViewport);
       if (this.props.onViewportChange) {
         this.props.onViewportChange(animatedViewport);
       }
@@ -291,7 +326,7 @@ export default class AnimationMapController extends PureComponent {
 
   _endAnimation() {
     console.log('### animation ended');
-    clearInterval(this.state.animationInterval);
+    clearInterval(this.animationContext.animationInterval);
     this.animationContext = {
       animationT: 0,
       animationInterval: null,
@@ -311,17 +346,20 @@ export default class AnimationMapController extends PureComponent {
       // updated viewport prop.
       const childProps = Object.assign({}, viewport, {viewport});
       childProps.children = this._recursiveUpdateChildren(child.props.children, viewport);
-      return cloneElement(child, childProps);
+      // console.log(`=== AnimationController Before clone update child: ${child.props._name_} pitch: ${child.props.pitch} -> ${viewport.pitch}`);
+      const cloned = cloneElement(child, childProps);
+      // console.log(`=== AnimationController After clone child: ${cloned.props._name_} got pitch: ${cloned.props.pitch}`);
+      return cloned;
     });
   }
 
   _isViewportAnimationEnabled(props) {
-    console.log(`_isViewportAnimationEnabled: ${props.viewportAnimationDuration !== 0}`);
+    // console.log(`_isViewportAnimationEnabled: ${props.viewportAnimationDuration !== 0}`);
     return props.viewportAnimationDuration !== 0;
   }
 
   _isAnimationInProgress() {
-    console.log(`_isAnimationInProgress: ${this.animationContext.animationInterval ? true : false}`);
+    // console.log(`_isAnimationInProgress: ${this.animationContext.animationInterval ? true : false}`);
     return this.animationContext.animationInterval ? true : false;
   }
 
@@ -335,12 +373,30 @@ export default class AnimationMapController extends PureComponent {
       cursor: getCursor(this.state)
     };
 
-    console.log(`this.someVar = ${this.someVar}`);
-    const viewport = this.animationContext.animatedViewport || this._extractViewportFromProps(this.props);
-    console.log(`==== render this.animationContext.animationT = ${this.animationContext.animationT} interval: ${this.animationContext.animationInterval}`);
-    console.log(`Controller Render: animatedViewport: ${this.animationContext.animatedViewport} pitch: ${viewport.pitch} animationInterval: ${this.animationContext.animationInterval} props.viewportAnimationDuration: ${this.props.viewportAnimationDuration}`);
-    const childrenWithProps = this._isAnimationInProgress() ?
-      this._recursiveUpdateChildren(this.props.children, viewport) : this.props.children;
+    let childrenWithProps;
+    // console.log(`this.someVar = ${this.someVar}`);
+    // const viewport = this.animationContext.animatedViewport || this._extractViewportFromProps(this.props);
+    // console.log(`==== render this.animationContext.animationT = ${this.animationContext.animationT} interval: ${this.animationContext.animationInterval}`);
+    // console.log(`Controller Render: animatedViewportPitch: ${this.animationContext.animatedViewport ? this.animationContext.animatedViewport.pitch : 'null'} update pitch: ${viewport.pitch} animationInterval: ${this.animationContext.animationInterval} props.viewportAnimationDuration: ${this.props.viewportAnimationDuration}`);
+    if (this._isAnimationInProgress()) {
+      // logViewport(`=== AnimationController Render using animatedViewport t: ${this.animationContext.animationT}`, this.animationContext.animatedViewport);
+      console.log(`=== AnimationController Render using animatedViewport t: ${this.animationContext.animationT} pitch: ${this.animationContext.animatedViewport.pitch}`);
+      childrenWithProps = this._recursiveUpdateChildren(this.props.children, this.animationContext.animatedViewport);
+    } else {
+      console.log('=== AnimationController Render using original props for children');
+      childrenWithProps = this.props.children;
+    }
+
+    // const {children} = this.props.chi
+    Children.forEach(childrenWithProps, element => {
+      if (!isValidElement(element)) {
+        return;
+      }
+
+      logViewport(`=== AnimationController FINAL child: ${element.props._name_} props:`, element.props);
+      // console.log(`=== AnimationController FINAL child: ${element.props._name_} pitch: ${element.props.pitch}`);
+      //do something with source..
+    });
 
     return (
       createElement('div', {
