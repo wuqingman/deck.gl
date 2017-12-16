@@ -23,6 +23,7 @@ export default `\
 const float COORDINATE_SYSTEM_IDENTITY = 0.;
 const float COORDINATE_SYSTEM_LNG_LAT = 1.;
 const float COORDINATE_SYSTEM_METER_OFFSETS = 2.;
+const float COORDINATE_SYSTEM_LNGLAT_OFFSETS = 3.;
 
 uniform float project_uCoordinateSystem;
 uniform float project_uScale;
@@ -94,6 +95,10 @@ vec4 project_position(vec4 position) {
     );
   }
 
+  if (project_uCoordinateSystem == COORDINATE_SYSTEM_LNGLAT_OFFSETS) {
+    return vec4(position.xyz * project_uPixelsPerDegree, position.w);
+  }
+
   // Apply model matrix
   vec4 position_modelspace = project_uModelMatrix * position;
   return project_scale(position_modelspace);
@@ -114,7 +119,8 @@ vec2 project_position(vec2 position) {
 // Uses project_uViewProjectionMatrix
 //
 vec4 project_to_clipspace(vec4 position) {
-  if (project_uCoordinateSystem == COORDINATE_SYSTEM_METER_OFFSETS) {
+  if (project_uCoordinateSystem == COORDINATE_SYSTEM_METER_OFFSETS ||
+    project_uCoordinateSystem == COORDINATE_SYSTEM_LNGLAT_OFFSETS) {
     // Needs to be divided with project_uPixelsPerUnit
     position.w *= project_uPixelsPerUnit.z;
   }

@@ -95,6 +95,7 @@ function calculateMatrixAndOffset({
     break;
 
   // TODO: make lighitng work for meter offset mode
+  case COORDINATE_SYSTEM.LNGLAT_OFFSETS:
   case COORDINATE_SYSTEM.METER_OFFSETS:
     projectionCenter = calculateProjectionCenter({
       coordinateOrigin, coordinateZoom, viewProjectionMatrix
