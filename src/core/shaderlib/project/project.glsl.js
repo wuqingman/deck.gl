@@ -66,7 +66,8 @@ vec4 project_scale(vec4 meters) {
 // normals in the worldspace
 //
 vec3 project_normal(vec3 vector) {
-  if (project_uCoordinateSystem == COORDINATE_SYSTEM_LNG_LAT) {
+  if (project_uCoordinateSystem == COORDINATE_SYSTEM_LNG_LAT ||
+    project_uCoordinateSystem == COORDINATE_SYSTEM_LNGLAT_OFFSETS) {
     return normalize(vector * project_uPixelsPerDegree);
   }
   return normalize(vector * project_uPixelsPerUnit);
@@ -99,6 +100,7 @@ vec4 project_position(vec4 position) {
     return vec4(position.xyz * project_uPixelsPerDegree, position.w);
   }
 
+  // METER_OFFSETS or IDENTITY
   // Apply model matrix
   vec4 position_modelspace = project_uModelMatrix * position;
   return project_scale(position_modelspace);
