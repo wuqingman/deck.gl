@@ -5,13 +5,9 @@ import DeckGL from 'deck.gl';
 import ArcBrushingLayer from './arc-brushing-layer';
 import ScatterplotBrushingLayer from './scatterplot-brushing-layer';
 
-export const inFlowColors = [
-  [35, 181, 184]
-];
+export const inFlowColors = [[35, 181, 184]];
 
-export const outFlowColors = [
-  [166, 3, 3]
-];
+export const outFlowColors = [[166, 3, 3]];
 
 // migrate out
 const sourceColor = [166, 3, 3];
@@ -19,7 +15,6 @@ const sourceColor = [166, 3, 3];
 const targetColor = [35, 181, 184];
 
 export default class DeckGLOverlay extends Component {
-
   static get defaultViewport() {
     return {
       longitude: -100,
@@ -66,7 +61,6 @@ export default class DeckGLOverlay extends Component {
     const pairs = {};
 
     data.forEach((county, i) => {
-
       const {flows, centroid: targetCentroid} = county.properties;
       const value = {gain: 0, loss: 0};
 
@@ -127,8 +121,15 @@ export default class DeckGLOverlay extends Component {
   }
 
   render() {
-    const {viewport, enableBrushing, brushRadius, strokeWidth,
-      opacity, mouseEntered, mousePosition} = this.props;
+    const {
+      viewport,
+      enableBrushing,
+      brushRadius,
+      strokeWidth,
+      opacity,
+      mouseEntered,
+      mousePosition
+    } = this.props;
     const {arcs, targets, sources} = this.state;
 
     // mouseEntered is undefined when mouse is in the component while it first loads
@@ -195,8 +196,6 @@ export default class DeckGLOverlay extends Component {
       })
     ];
 
-    return (
-      <DeckGL {...viewport} layers={ layers } />
-    );
+    return <DeckGL {...viewport} layers={layers} />;
   }
 }

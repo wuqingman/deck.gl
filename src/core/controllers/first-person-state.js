@@ -3,14 +3,14 @@ import ViewState from './view-state';
 import {Vector3} from 'math.gl';
 import assert from 'assert';
 
-const MOVEMENT_SPEED = 1;  // 1 meter per keyboard click
+const MOVEMENT_SPEED = 1; // 1 meter per keyboard click
 const ROTATION_STEP_DEGREES = 2;
 
 /* Helpers */
 
 // Constrain number between bounds
 function clamp(x, min, max) {
-  return x < min ? min : (x > max ? max : x);
+  return x < min ? min : x > max ? max : x;
 }
 
 function ensureFinite(value, fallbackValue) {
@@ -18,7 +18,6 @@ function ensureFinite(value, fallbackValue) {
 }
 
 export default class FirstPersonState extends ViewState {
-
   constructor({
     /* Viewport arguments */
     width, // Width of viewport

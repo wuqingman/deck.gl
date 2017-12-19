@@ -87,7 +87,7 @@ const propTypes = {
   })
 };
 
-const getDefaultCursor = ({isDragging}) => isDragging ? CURSOR.GRABBING : CURSOR.GRAB;
+const getDefaultCursor = ({isDragging}) => (isDragging ? CURSOR.GRABBING : CURSOR.GRAB);
 
 const defaultProps = Object.assign({}, TransitionManager.defaultProps, {
   onViewportChange: null,
@@ -102,12 +102,11 @@ const defaultProps = Object.assign({}, TransitionManager.defaultProps, {
 });
 
 export default class ViewportController extends PureComponent {
-
   constructor(props) {
     super(props);
 
     this.state = {
-      isDragging: false      // Whether the cursor is down
+      isDragging: false // Whether the cursor is down
     };
   }
 
@@ -120,10 +119,12 @@ export default class ViewportController extends PureComponent {
     // Cannot use defaultProps here because it needs to be per map instance
     this._controls = this.props.controls || new ViewportControls(this.props.viewportState);
 
-    this._controls.setOptions(Object.assign({}, this.props, {
-      onStateChange: this._onInteractiveStateChange.bind(this),
-      eventManager: this._eventManager
-    }));
+    this._controls.setOptions(
+      Object.assign({}, this.props, {
+        onStateChange: this._onInteractiveStateChange.bind(this),
+        eventManager: this._eventManager
+      })
+    );
 
     this._transitionManger = new TransitionManager(this.props);
   }
@@ -163,14 +164,14 @@ export default class ViewportController extends PureComponent {
       cursor: getCursor(this.state)
     };
 
-    return (
-      createElement('div', {
+    return createElement(
+      'div',
+      {
         key: 'map-controls',
         ref: 'eventCanvas',
         style: eventCanvasStyle
       },
-        this.props.children
-      )
+      this.props.children
     );
   }
 }

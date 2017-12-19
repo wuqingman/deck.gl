@@ -3,7 +3,6 @@ import OrbitControllerJS from '../../core/pure-js/orbit-controller-js';
 import OrbitViewport from '../../core/viewports/orbit-viewport';
 
 export default class OrbitController extends PureComponent {
-
   // Returns a deck.gl Viewport instance, to be used with the DeckGL component
   static getViewport(viewport) {
     return new OrbitViewport(viewport);
@@ -36,14 +35,14 @@ export default class OrbitController extends PureComponent {
       position: 'relative'
     };
 
-    return (
-      createElement('div', {
+    return createElement(
+      'div',
+      {
         key: 'map-controls',
         ref: 'eventCanvas',
         style: eventCanvasStyle
       },
-        this.props.children
-      )
+      this.props.children
     );
   }
 }
